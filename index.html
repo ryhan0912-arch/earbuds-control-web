@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Earbuds Control</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#ffffff; --text:#14171c; --muted:#5f6773; --line:#e2e5ea;
+  --accent:#1f8fd6; --accent-ink:#ffffff; --soft:#e8f3fb; --good:#1f9d55; --warn:#c77700; --bad:#c62828;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1216; --card:#171b21; --text:#e8ebef; --muted:#9aa3ae; --line:#2a3039;
+    --accent:#3aa6ea; --accent-ink:#06121b; --soft:#14283a; --good:#3ccf7d; --warn:#f0a030; --bad:#ef5350;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1216; --card:#171b21; --text:#e8ebef; --muted:#9aa3ae; --line:#2a3039;
+  --accent:#3aa6ea; --accent-ink:#06121b; --soft:#14283a; --good:#3ccf7d; --warn:#f0a030; --bad:#ef5350;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar{max-width:980px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.bar h1{font-size:17px;margin:0;flex:1;min-width:160px}
+.bar h1 small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+main{max-width:980px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card.wide{grid-column:1/-1}
+.card h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:8px 14px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;border-radius:0;flex:1;padding:9px 8px;min-width:90px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row label{flex:1}
+.sub{color:var(--muted);font-size:13px}
+select,input[type=number]{font:inherit;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+input[type=range]{accent-color:var(--accent);width:100%}
+.row label.switch,.switch{position:relative;width:44px;height:26px;flex:0 0 44px;display:inline-block}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--line);border-radius:26px;transition:.15s}
+.switch span:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span:before{transform:translateX(18px)}
+.batt{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.bud{background:var(--soft);border-radius:12px;padding:12px}
+.bud b{font-size:26px;display:block}
+.meter{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;background:var(--good);width:0}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--bad)}
+.dot.on{background:var(--good)}
+.eq{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;align-items:end;margin-top:10px}
+.eq div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.eq input[type=range]{writing-mode:vertical-lr;direction:rtl;height:150px;width:28px}
+.eq output{color:var(--text);font-variant-numeric:tabular-nums}
+.btns{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 12px;align-items:center}
+.btns .h{font-size:12.5px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-variant-numeric:tabular-nums;word-break:break-all}
+.notice{background:var(--soft);border-radius:12px;padding:12px 14px;font-size:14px}
+.notice.err{background:color-mix(in srgb,var(--bad) 15%,transparent)}
+#log{font:12px/1.4 ui-monospace,Consolas,monospace;max-height:260px;overflow:auto;background:var(--bg);border-radius:8px;padding:8px;white-space:pre-wrap;margin-top:8px}
+.disabled-ui{opacity:.45;pointer-events:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips label{display:inline-flex;gap:6px;align-items:center;background:var(--soft);padding:6px 10px;border-radius:20px}
+ul.devs{list-style:none;margin:0;padding:0}
+ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+@media (max-width:560px){.eq input[type=range]{height:120px;width:22px}.eq{gap:2px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Earbuds Control<small id="devName">Not connected</small></h1>
+    <span class="status"><span class="dot" id="dot"></span><span id="connText">Disconnected</span></span>
+    <button id="themeBtn" title="Toggle theme">◐</button>
+    <button class="primary" id="connectBtn">Connect</button>
+  </div>
+</header>
+
+<main>
+  <div class="card wide" id="introCard">
+    <div class="notice" id="notice">
+      Works with <b>soundcore R50i NC / P30i</b> (model A3959) in <b>Chrome or Edge on Windows</b>.
+      Make sure the earbuds are paired and connected to this PC, then click <b>Connect</b> and pick the
+      entry for your earbuds (it may be listed as <i>JL_SPP</i> or the earbuds' name).
+    </div>
+  </div>
+
+  <section class="card" id="battCard">
+    <h2>Battery</h2>
+    <div class="batt">
+      <div class="bud"><span class="sub">Left</span><b id="battL">–</b><div class="meter"><i id="mL"></i></div><span class="sub" id="chgL"></span></div>
+      <div class="bud"><span class="sub">Right</span><b id="battR">–</b><div class="meter"><i id="mR"></i></div><span class="sub" id="chgR"></span></div>
+    </div>
+    <p class="sub" id="twsText" style="margin:10px 0 0"></p>
+  </section>
+
+  <section class="card ctl" id="soundCard">
+    <h2>Sound mode</h2>
+    <div class="seg" id="ambientSeg">
+      <button data-v="0">Noise cancelling</button>
+      <button data-v="1">Transparency</button>
+      <button data-v="2">Normal</button>
+    </div>
+    <div id="ncBox" style="margin-top:14px">
+      <div class="seg" id="ncModeSeg">
+        <button data-v="1">Adaptive</button>
+        <button data-v="0">Manual</button>
+        <button data-v="2">Scene</button>
+      </div>
+      <div id="manualBox" class="row" style="border:0">
+        <label>Strength <span class="sub" id="manualVal"></span></label>
+        <input type="range" id="manual" min="1" max="5" step="1" style="max-width:180px">
+      </div>
+      <div id="adaptiveBox">
+        <div class="row" style="border:0"><label>Current adaptive level</label><span id="adaptiveVal">–</span></div>
+        <div class="row"><label>Adaptive sensitivity <span class="sub" id="sensVal"></span></label>
+          <input type="range" id="sens" min="0" max="10" step="1" style="max-width:180px"></div>
+      </div>
+      <div id="sceneBox" style="margin-top:10px">
+        <div class="seg" id="sceneSeg">
+          <button data-v="0">Transport</button>
+          <button data-v="1">Outdoor</button>
+          <button data-v="2">Indoor</button>
+        </div>
+      </div>
+    </div>
+    <div class="row" id="windRow" style="margin-top:8px">
+      <label>Wind noise reduction <div class="sub" id="windDet"></div></label>
+      <label class="switch"><input type="checkbox" id="wind"><span></span></label>
+    </div>
+  </section>
+
+  <section class="card wide ctl" id="eqCard">
+    <h2>Equalizer</h2>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <select id="preset"></select>
+      <button id="eqReset">Reset to Signature</button>
+      <span class="sub">Moving a slider switches to Custom. Changes apply instantly.</span>
+    </div>
+    <div class="eq" id="eqBands"></div>
+  </section>
+
+  <section class="card wide ctl" id="btnCard">
+    <h2>Touch controls</h2>
+    <div class="btns" id="btnGrid">
+      <span></span><span class="h">Left earbud</span><span class="h">Right earbud</span>
+    </div>
+    <div style="margin-top:12px"><button id="btnReset">Reset controls to default</button></div>
+  </section>
+
+  <section class="card ctl" id="cycleCard">
+    <h2>Mode switch cycle</h2>
+    <p class="sub" style="margin-top:0">Modes the "Sound mode" touch action cycles through.</p>
+    <div class="chips">
+      <label><input type="checkbox" id="cyNc"> Noise cancelling</label>
+      <label><input type="checkbox" id="cyTr"> Transparency</label>
+      <label><input type="checkbox" id="cyNo"> Normal</label>
+    </div>
+  </section>
+
+  <section class="card ctl" id="miscCard">
+    <h2>General</h2>
+    <div class="row"><label>Gaming mode (low latency)<div class="sub" id="gameNote"></div></label><label class="switch"><input type="checkbox" id="gaming"><span></span></label></div>
+    <div class="row"><label>3D surround sound</label><label class="switch"><input type="checkbox" id="surround"><span></span></label></div>
+    <div class="row"><label>Touch tone</label><label class="switch"><input type="checkbox" id="touchTone"><span></span></label></div>
+    <div class="row"><label>Low battery voice prompt</label><label class="switch"><input type="checkbox" id="lowBatt"><span></span></label></div>
+    <div class="row"><label>Auto power off</label><label class="switch"><input type="checkbox" id="apoOn"><span></span></label></div>
+    <div class="row"><label>Power off after</label>
+      <select id="apoDur"><option value="0">10 minutes</option><option value="1">20 minutes</option><option value="2">30 minutes</option><option value="3">60 minutes</option></select></div>
+  </section>
+
+  <section class="card ctl" id="dualCard">
+    <h2>Dual connection</h2>
+    <div class="row"><label>Connect to two devices at once</label><label class="switch"><input type="checkbox" id="dual"><span></span></label></div>
+    <ul class="devs" id="devList"></ul>
+    <button id="devRefresh" style="margin-top:8px">Refresh device list</button>
+  </section>
+
+  <section class="card" id="infoCard">
+    <h2>Device info</h2>
+    <dl class="kv">
+      <dt>Model</dt><dd id="iModel">–</dd>
+      <dt>Serial</dt><dd id="iSerial">–</dd>
+      <dt>Firmware L</dt><dd id="iFwL">–</dd>
+      <dt>Firmware R</dt><dd id="iFwR">–</dd>
+    </dl>
+    <button id="refreshBtn" style="margin-top:12px">Refresh all</button>
+  </section>
+
+  <section class="card wide">
+    <details>
+      <summary>Bluetooth packet log</summary>
+      <div id="log"></div>
+    </details>
+    <p class="sub" style="margin:10px 0 0">Not affiliated with Anker. Protocol details from the open-source
+      <a href="https://github.com/Oppzippy/OpenSCQ30" target="_blank" rel="noopener">OpenSCQ30</a> project.</p>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ---------- constants ---------- */
+const SERVICE_UUID = "0cf12d31-fac3-4553-bd80-d6832e7b395b";
+const CMD = {
+  STATE:[0x01,0x01], TWS:[0x01,0x02], BATT:[0x01,0x03], CHG:[0x01,0x04], SERIAL:[0x01,0x05],
+  GAMING_UPD:[0x01,0x11], SOUND_UPD:[0x06,0x01], SET_SOUND:[0x06,0x81], SET_CYCLE:[0x06,0x82],
+  SET_EQ_DRC:[0x02,0x83], SET_SURROUND:[0x02,0x86], SET_TOUCH_TONE:[0x01,0x83], SET_GAMING:[0x01,0x87],
+  SET_APO:[0x01,0x86], SET_LOWBATT:[0x10,0x82], SET_BUTTON:[0x04,0x81], RESET_BUTTONS:[0x04,0x82],
+  DUAL_LIST:[0x0b,0x01], SET_DUAL:[0x0b,0x84]
+};
+const PRESETS = [
+  ["Soundcore Signature",0,[0,0,0,0,0,0,0,0]], ["Acoustic",1,[40,10,20,20,40,40,40,20]],
+  ["Bass Booster",2,[40,30,10,0,0,0,0,0]], ["Bass Reducer",3,[-40,-30,-10,0,0,0,0,0]],
+  ["Classical",4,[30,30,-20,-20,0,20,30,40]], ["Podcast",5,[-30,20,40,40,30,20,0,-20]],
+  ["Dance",6,[20,-30,-10,10,20,20,10,-30]], ["Deep",7,[20,10,30,30,20,-20,-40,-50]],
+  ["Electronic",8,[30,20,-20,20,10,20,30,30]], ["Flat",9,[-20,-20,-10,0,0,0,-20,-20]],
+  ["Hip-Hop",10,[20,30,-10,-10,20,-10,20,30]], ["Jazz",11,[20,20,-20,-20,0,20,30,40]],
+  ["Latin",12,[0,0,-20,-20,-20,0,30,50]], ["Lounge",13,[-10,20,40,30,0,-20,20,10]],
+  ["Piano",14,[0,30,30,20,40,50,30,40]], ["Pop",15,[-10,10,30,30,10,-10,-20,-30]],
+  ["R&B",16,[60,20,-20,-20,20,30,30,40]], ["Rock",17,[30,20,-10,-10,10,30,40,50]],
+  ["Small Speakers",18,[40,30,10,0,-20,-30,-40,-40]], ["Spoken Word",19,[-30,-20,10,20,20,10,0,-30]],
+  ["Treble Booster",20,[-20,-20,-20,-10,10,20,20,40]], ["Treble Reducer",21,[0,0,0,-20,-30,-40,-40,-60]]
+];
+const CUSTOM_ID = 0xfefe;
+const BAND_HZ = ["100","200","400","800","1.6k","3.2k","6.4k","12.8k"];
+const ACTIONS = [[0,"Volume up"],[1,"Volume down"],[2,"Previous track"],[3,"Next track"],[4,"Sound mode"],[5,"Voice assistant"],[6,"Play / pause"],[15,"Disabled"]];
+// state order: LS, RS, LD, RD, LT, RT, LL, RL ; button ids: single=2 double=0 triple=5 long=1
+const PRESS = [["Single tap",2],["Double tap",0],["Triple tap",5],["Long press",1]];
+
+/* ---------- state ---------- */
+let port=null, reader=null, writer=null, rxBuf=new Uint8Array(0), connected=false;
+const S = {}; // device state
+let dualPackets = [];
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const hex = a => Array.from(a, b => b.toString(16).padStart(2,"0")).join(" ");
+function log(dir, bytes, note=""){
+  const el=$("log"); const t=new Date().toLocaleTimeString();
+  el.textContent += `${t} ${dir} ${hex(bytes)}${note? "  ("+note+")":""}\n`;
+  if(el.textContent.length>60000) el.textContent=el.textContent.slice(-40000);
+  el.scrollTop=el.scrollHeight;
+}
+function notice(html, err=false){ const n=$("notice"); n.innerHTML=html; n.classList.toggle("err",err); $("introCard").hidden=false; }
+function buildPacket(cmd, body=[]){
+  const len = 10 + body.length;
+  const p = [0x08,0xee,0x00,0x00,0x00, cmd[0],cmd[1], len & 0xff, len >> 8, ...body];
+  p.push(p.reduce((a,b)=>(a+b)&0xff,0));
+  return new Uint8Array(p);
+}
+async function send(cmd, body=[], note=""){
+  if(!writer) return;
+  const p = buildPacket(cmd, body);
+  log("→", p, note);
+  await writer.write(p);
+}
+const ascii = b => String.fromCharCode(...b).replace(/\0+$/,"");
+
+/* ---------- connection ---------- */
+async function connect(){
+  if(!("serial" in navigator)){
+    notice("This browser can't open Bluetooth serial connections. Open this page in <b>Chrome or Edge (version 117 or newer)</b> on Windows.", true);
+    return;
+  }
+  try{
+    port = await navigator.serial.requestPort({
+      filters:[{ bluetoothServiceClassId: SERVICE_UUID }],
+      allowedBluetoothServiceClassIds:[SERVICE_UUID]
+    });
+    await port.open({ baudRate: 115200 });
+  }catch(e){
+    notice(`Couldn't open the earbuds: ${e.message}<br>Check they are out of the case, paired and connected to this PC, then try again.`, true);
+    port=null; return;
+  }
+  writer = port.writable.getWriter();
+  connected = true; setConnUI();
+  $("introCard").hidden = true;
+  readLoop();
+  port.addEventListener("disconnect", onDisconnect);
+  await requestAll();
+}
+async function disconnect(){
+  try{ if(reader){ await reader.cancel(); } }catch{}
+  try{ writer && writer.releaseLock(); }catch{}
+  try{ port && await port.close(); }catch{}
+  onDisconnect();
+}
+function onDisconnect(){
+  connected=false; port=null; reader=null; writer=null; rxBuf=new Uint8Array(0);
+  setConnUI();
+}
+function setConnUI(){
+  $("dot").classList.toggle("on",connected);
+  $("connText").textContent = connected ? "Connected" : "Disconnected";
+  $("connectBtn").textContent = connected ? "Disconnect" : "Connect";
+  document.querySelectorAll(".ctl").forEach(c=>c.classList.toggle("disabled-ui", !connected || !S.loaded));
+  if(!connected){ $("devName").textContent="Not connected"; }
+}
+async function readLoop(){
+  while(port && port.readable){
+    reader = port.readable.getReader();
+    try{
+      while(true){
+        const {value, done} = await reader.read();
+        if(done) break;
+        if(value) onBytes(value);
+      }
+    }catch(e){ log("!", [], "read error: "+e.message); }
+    finally{ try{ reader.releaseLock(); }catch{} }
+    if(!connected) break;
+  }
+}
+async function requestAll(){
+  await send(CMD.STATE, [], "request state");
+  setTimeout(()=>send(CMD.SERIAL, [], "request serial/firmware"), 300);
+}
+
+/* ---------- inbound parsing ---------- */
+function onBytes(chunk){
+  const b = new Uint8Array(rxBuf.length + chunk.length); b.set(rxBuf); b.set(chunk, rxBuf.length); rxBuf = b;
+  while(true){
+    let start = -1;
+    for(let i=0;i+4<rxBuf.length;i++){ if(rxBuf[i]===0x09&&rxBuf[i+1]===0xff&&rxBuf[i+2]===0&&rxBuf[i+3]===0&&rxBuf[i+4]===0x01){start=i;break;} }
+    if(start<0){ if(rxBuf.length>4) rxBuf=rxBuf.slice(rxBuf.length-4); return; }
+    if(start>0) rxBuf = rxBuf.slice(start);
+    if(rxBuf.length<9) return;
+    const len = rxBuf[7] | (rxBuf[8]<<8);
+    if(len<10 || len>2048){ rxBuf=rxBuf.slice(1); continue; }
+    if(rxBuf.length<len) return;
+    const pkt = rxBuf.slice(0,len); rxBuf = rxBuf.slice(len);
+    const sum = pkt.slice(0,len-1).reduce((a,x)=>(a+x)&0xff,0);
+    log("←", pkt, sum===pkt[len-1] ? "" : "bad checksum");
+    if(sum!==pkt[len-1]) continue;
+    handlePacket([pkt[5],pkt[6]], pkt.slice(9,len-1));
+  }
+}
+const is = (c, k) => c[0]===k[0] && c[1]===k[1];
+function handlePacket(cmd, body){
+  if(is(cmd,CMD.STATE)) { if(body.length>=69) parseState(body); }
+  else if(is(cmd,CMD.SOUND_UPD) && body.length>=7) { S.sound = parseSound(body,0); render(); }
+  else if(is(cmd,CMD.BATT) && body.length>=2) { S.battL=body[0]; S.battR=body[1]; render(); }
+  else if(is(cmd,CMD.CHG) && body.length>=2) { S.chgL=body[0]===1; S.chgR=body[1]===1; render(); }
+  else if(is(cmd,CMD.TWS) && body.length>=2) { S.host=body[0]; S.twsConnected=body[1]===1; render(); }
+  else if(is(cmd,CMD.GAMING_UPD) && body.length>=1) { S.gaming=body[0]===1; render(); }
+  else if(is(cmd,CMD.SERIAL) && body.length>=26) { S.fwL=fw(body.slice(0,5)); S.fwR=fw(body.slice(5,10)); S.serial=ascii(body.slice(10,26)); render(); }
+  else if(is(cmd,CMD.DUAL_LIST) && body.length>=2) parseDual(body);
+}
+function fw(b){ const s=ascii(b); return /^\d\d\.\d\d$/.test(s) ? s : null; }
+function parseSound(b,o){
+  return { ambient:b[o], manual:(b[o+1]>>4)&0xf, adaptive:b[o+1]&0xf, ncMode:b[o+3],
+           windOn:!!(b[o+4]&1), windDetected:!!(b[o+4]&2), sens:b[o+5], scene:b[o+6] };
+}
+function parseState(b){
+  let o=0;
+  S.host=b[o]; S.twsConnected=b[o+1]===1; o+=2;
+  S.battL=b[o]; S.battR=b[o+1]; S.chgL=b[o+2]===1; S.chgR=b[o+3]===1; o+=4;
+  S.fwL=fw(b.slice(o,o+5)); S.fwR=fw(b.slice(o+5,o+10)); o+=10;
+  S.serial=ascii(b.slice(o,o+16)); o+=16;
+  S.eqPreset=b[o]|(b[o+1]<<8); o+=2;
+  S.eqBands=Array.from(b.slice(o,o+10),x=>x-120); o+=10;
+  o+=11; // unknown
+  S.buttons=Array.from(b.slice(o,o+8)); o+=8;
+  S.cycle=b[o]; o+=1;
+  S.sound=parseSound(b,o); o+=7;
+  o+=1; // unknown
+  S.touchTone=b[o]===1; o+=1;
+  S.dual=b[o]===1; o+=1;
+  S.surround=b[o]===1; o+=1;
+  S.apoOn=b[o]===1; S.apoDur=b[o+1]; o+=2;
+  S.lowBatt=b[o]===1; o+=1;
+  S.gaming=b[o]===1; o+=1;
+  S.loaded=true;
+  setConnUI(); render();
+  if(S.dual) send(CMD.DUAL_LIST,[],"request dual-connection devices");
+}
+function parseDual(b){
+  const total=b[0], idx=b[1];
+  if(idx===1) dualPackets=[];
+  let o=2; const devs=[];
+  while(o<b.length){
+    const len=b[o]; if(!len) break;
+    const isConn=b[o+1]===1; const mac=Array.from(b.slice(o+2,o+8),x=>x.toString(16).padStart(2,"0")).join(":");
+    const nameBytes=b.slice(o+8, Math.min(b.length, o+len));
+    devs.push({isConn, mac, name:new TextDecoder().decode(nameBytes).replace(/\0.*$/s,"")});
+    o+=len;
+  }
+  dualPackets.push(...devs);
+  if(idx>=total){ S.dualDevices=dualPackets; render(); }
+}
+
+/* ---------- rendering ---------- */
+const battPct = l => (l==null||l>9) ? null : (l+1)*10; // device reports 0..9 = 10%..100%
+function battText(l){ const p=battPct(l); return p==null ? "–" : p+"%"; }
+function pressSeg(id, v){ $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(+x.dataset.v===v))); }
+function render(){
+  if(!connected) return;
+  $("devName").textContent = "soundcore R50i NC / P30i" + (S.serial? " · "+S.serial.slice(0,4):"");
+  $("battL").textContent=battText(S.battL); $("battR").textContent=battText(S.battR);
+  $("mL").style.width=(battPct(S.battL)||0)+"%"; $("mR").style.width=(battPct(S.battR)||0)+"%";
+  $("chgL").textContent=S.chgL?"⚡ Charging":""; $("chgR").textContent=S.chgR?"⚡ Charging":"";
+  $("twsText").textContent = S.twsConnected===undefined ? "" :
+     (S.twsConnected ? "Both earbuds connected" : "Only one earbud connected") + " · main: " + (S.host===1?"right":"left");
+  $("iModel").textContent="A3959"; $("iSerial").textContent=S.serial||"–";
+  $("iFwL").textContent=S.fwL||"–"; $("iFwR").textContent=S.fwR||"–";
+
+  const sm=S.sound;
+  if(sm){
+    pressSeg("ambientSeg", sm.ambient);
+    $("ncBox").hidden = sm.ambient!==0;
+    pressSeg("ncModeSeg", sm.ncMode);
+    $("manualBox").hidden = sm.ncMode!==0;
+    $("adaptiveBox").hidden = sm.ncMode!==1;
+    $("sceneBox").hidden = sm.ncMode!==2;
+    $("manual").value=sm.manual; $("manualVal").textContent=sm.manual+" / 5";
+    $("adaptiveVal").textContent=sm.adaptive+" / 5";
+    $("sens").value=sm.sens; $("sensVal").textContent=sm.sens+" / 10";
+    pressSeg("sceneSeg", sm.scene);
+    $("windRow").hidden = sm.ambient===2;
+    $("wind").checked=sm.windOn; $("windDet").textContent = sm.windDetected ? "Wind detected right now" : "";
+  }
+  if(S.eqBands){
+    const known = PRESETS.some(p=>p[1]===S.eqPreset);
+    $("preset").value = known ? String(S.eqPreset) : String(CUSTOM_ID);
+    S.eqBands.slice(0,8).forEach((v,i)=>{ const r=$("band"+i); if(r && document.activeElement!==r){ r.value=v; } $("bv"+i).textContent=fmtDb(v); });
+  }
+  if(S.buttons){
+    const order=[[0,1],[2,3],[4,5],[6,7]];
+    order.forEach(([li,ri],k)=>{
+      for(const [idx,side] of [[li,"L"],[ri,"R"]]){
+        const sel=$("bt"+k+side); const cur = S.twsConnected===false ? (S.buttons[idx]>>4) : (S.buttons[idx]&0xf);
+        sel.value=String(cur);
+      }
+    });
+  }
+  if(S.cycle!==undefined){ $("cyNc").checked=!!(S.cycle&1); $("cyTr").checked=!!(S.cycle&2); $("cyNo").checked=!!(S.cycle&4); }
+  $("touchTone").checked=!!S.touchTone; $("surround").checked=!!S.surround; $("lowBatt").checked=!!S.lowBatt;
+  $("apoOn").checked=!!S.apoOn; $("apoDur").value=String(S.apoDur??0); $("apoDur").disabled=!S.apoOn;
+  const gameOk = !S.fwL || !S.fwR || Math.min(parseFloat(S.fwL),parseFloat(S.fwR))>=1.6;
+  $("gaming").checked=!!S.gaming; $("gaming").disabled=!gameOk;
+  $("gameNote").textContent = gameOk ? "" : "Needs firmware 01.60 or newer";
+  $("dual").checked=!!S.dual;
+  const ul=$("devList"); ul.innerHTML="";
+  if(S.dual && S.dualDevices){ for(const d of S.dualDevices){ const li=document.createElement("li"); li.innerHTML=`<span></span><span class="sub"></span>`; li.firstChild.textContent=d.name||d.mac; li.lastChild.textContent=d.isConn?"Connected":"Paired"; ul.appendChild(li);} }
+  $("devRefresh").hidden=!S.dual;
+}
+const fmtDb = v => (v>0?"+":"")+(v/10).toFixed(1);
+
+/* ---------- actions ---------- */
+function soundBytes(sm){ return [sm.ambient, ((sm.manual&0xf)<<4)|(sm.adaptive&0xf), sm.ambient, sm.ncMode, (sm.windOn?1:0)|(sm.windDetected?2:0), sm.sens, sm.scene]; }
+async function setSound(patch){
+  if(!S.sound) return;
+  const prev=S.sound; const next={...prev,...patch};
+  // switch the top-level mode first, then the sub-settings (mirrors how the official app steps through modes)
+  if(patch.ambient!==undefined && patch.ambient!==prev.ambient && Object.keys(patch).length>1){
+    await send(CMD.SET_SOUND, soundBytes({...prev, ambient:patch.ambient}), "sound mode step");
+  }
+  S.sound=next; render();
+  await send(CMD.SET_SOUND, soundBytes(next), "set sound mode");
+}
+
+function drc(adj10){ // port of the DRC transform the device expects for band values (tenths of dB)
+  const a = adj10.map(v=>v/10); const S1=0.85, L1=0.95;
+  const lows=a[2]*0.81*S1, highs=a[5]*0.81*S1;
+  const C=[
+    [1.26,-0.71*S1,0.177,-0.0494,0.0345,-0.0197,0.0075,-0.00217],
+    [-0.71*S1,1.73*L1,0,0.204,-0.068,0.045,-0.0235,0.0075],
+    [0.177,-0.81*S1,1.73*L1,-0.81*S1,0.208,-0.07,0.045,-0.0197],
+    [-0.0494,0.204,0,1.73*L1,-0.82*S1,0.208,-0.068,0.0345],
+    [0.0345,-0.068,0.208,-0.82*S1,1.73*L1,0,0.204,-0.0494],
+    [-0.0197,0.045,-0.07,0.208,-0.81*S1,1.73*L1,-0.81*S1,0.177],
+    [0.0075,-0.0235,0.045,-0.068,0.204,0,1.83*L1,-0.71*S1],
+    [-0.00217,0.0075,-0.0197,0.0345,-0.0494,0.177,-0.71*S1,1.5]];
+  const out=[];
+  for(let bi=0;bi<8;bi++){
+    let acc=0;
+    for(let i=0;i<8;i++){
+      if((bi===1||bi===3)&&i===2) acc-=lows;
+      else if((bi===4||bi===6)&&i===5) acc-=highs;
+      else acc+=a[i]*C[bi][i];
+    }
+    const x=(acc/10)*10; out.push(Math.sign(x)*Math.round(Math.abs(x)));
+  }
+  out.push(0,-120);
+  return out.map(v=>Math.max(-120,Math.min(134,v)));
+}
+let eqTimer=null;
+function queueEq(){ clearTimeout(eqTimer); eqTimer=setTimeout(sendEq,180); }
+async function sendEq(){
+  const id=S.eqPreset; const bands=S.eqBands;
+  const raw=bands.map(v=>Math.max(-120,Math.min(134,v))+120);
+  const d=drc(bands).map(v=>v+120);
+  await send(CMD.SET_EQ_DRC, [id&0xff, id>>8, ...raw, ...d], "set equalizer");
+}
+function choosePreset(id){
+  const p=PRESETS.find(x=>x[1]===id);
+  S.eqPreset=id;
+  if(p) S.eqBands=[...p[2],0,-120];
+  else S.eqBands=[...S.eqBands.slice(0,8),0,0];
+  render(); sendEq();
+}
+async function setButton(k, side, action){
+  const [ ,buttonId]=PRESS[k]; const idx=k*2+(side==="L"?0:1);
+  const cur=S.buttons[idx];
+  const next = S.twsConnected===false ? ((action&0xf)<<4)|(cur&0xf) : (cur&0xf0)|(action&0xf);
+  S.buttons[idx]=next;
+  await send(CMD.SET_BUTTON, [side==="L"?0:1, buttonId, next], "set touch control");
+}
+async function flag(cmd, key, val, note){ S[key]=val; render(); await send(cmd,[val?1:0],note); }
+
+/* ---------- build UI ---------- */
+function buildUI(){
+  const sel=$("preset");
+  for(const [n,id] of PRESETS){ const o=new Option(n,String(id)); sel.add(o); }
+  sel.add(new Option("Custom",String(CUSTOM_ID)));
+  sel.onchange=()=>choosePreset(+sel.value);
+  const eq=$("eqBands");
+  BAND_HZ.forEach((hz,i)=>{
+    const d=document.createElement("div");
+    d.innerHTML=`<output id="bv${i}">0.0</output><input type="range" id="band${i}" min="-60" max="60" step="5" value="0" aria-label="${hz} Hz"><span>${hz}</span>`;
+    eq.appendChild(d);
+    d.querySelector("input").addEventListener("input",e=>{
+      if(!S.eqBands) return;
+      S.eqBands[i]=+e.target.value; S.eqPreset=CUSTOM_ID; S.eqBands[8]=0; S.eqBands[9]=0;
+      $("bv"+i).textContent=fmtDb(+e.target.value); $("preset").value=String(CUSTOM_ID); queueEq();
+    });
+  });
+  $("eqReset").onclick=()=>choosePreset(0);
+
+  const g=$("btnGrid");
+  PRESS.forEach(([name],k)=>{
+    const lab=document.createElement("span"); lab.textContent=name; g.appendChild(lab);
+    for(const side of ["L","R"]){
+      const s=document.createElement("select"); s.id="bt"+k+side;
+      for(const [v,n] of ACTIONS) s.add(new Option(n,String(v)));
+      s.onchange=()=>setButton(k,side,+s.value); g.appendChild(s);
+    }
+  });
+  $("btnReset").onclick=async()=>{ if(!confirm("Reset all touch controls to factory defaults?")) return; await send(CMD.RESET_BUTTONS,[],"reset touch controls"); setTimeout(()=>send(CMD.STATE,[],"request state"),500); };
+
+  $("ambientSeg").onclick=e=>{ const b=e.target.closest("button"); if(b) setSound({ambient:+b.dataset.v}); };
+  $("ncModeSeg").onclick=e=>{ const b=e.target.closest("button"); if(b) setSound({ncMode:+b.dataset.v}); };
+  $("sceneSeg").onclick=e=>{ const b=e.target.closest("button"); if(b) setSound({scene:+b.dataset.v}); };
+  $("manual").onchange=e=>setSound({manual:+e.target.value});
+  $("manual").oninput=e=>$("manualVal").textContent=e.target.value+" / 5";
+  $("sens").onchange=e=>setSound({sens:+e.target.value});
+  $("sens").oninput=e=>$("sensVal").textContent=e.target.value+" / 10";
+  $("wind").onchange=e=>setSound({windOn:e.target.checked});
+
+  const cyc=()=>{ const v=($("cyNc").checked?1:0)|($("cyTr").checked?2:0)|($("cyNo").checked?4:0);
+    if(!v){ render(); return; } S.cycle=v; send(CMD.SET_CYCLE,[v],"set mode cycle"); };
+  ["cyNc","cyTr","cyNo"].forEach(id=>$(id).onchange=cyc);
+
+  $("gaming").onchange=e=>flag(CMD.SET_GAMING,"gaming",e.target.checked,"gaming mode");
+  $("surround").onchange=e=>flag(CMD.SET_SURROUND,"surround",e.target.checked,"surround sound");
+  $("touchTone").onchange=e=>flag(CMD.SET_TOUCH_TONE,"touchTone",e.target.checked,"touch tone");
+  $("lowBatt").onchange=e=>flag(CMD.SET_LOWBATT,"lowBatt",e.target.checked,"low battery prompt");
+  const apo=()=>{ S.apoOn=$("apoOn").checked; S.apoDur=+$("apoDur").value; render(); send(CMD.SET_APO,[S.apoOn?1:0,S.apoDur],"auto power off"); };
+  $("apoOn").onchange=apo; $("apoDur").onchange=apo;
+  $("dual").onchange=async e=>{ await flag(CMD.SET_DUAL,"dual",e.target.checked,"dual connection"); if(e.target.checked) setTimeout(()=>send(CMD.DUAL_LIST,[],"request dual-connection devices"),400); };
+  $("devRefresh").onclick=()=>send(CMD.DUAL_LIST,[],"request dual-connection devices");
+  $("refreshBtn").onclick=requestAll;
+  $("connectBtn").onclick=()=>connected?disconnect():connect();
+
+  $("themeBtn").onclick=()=>{
+    const cur=document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+    const nx=cur==="dark"?"light":"dark"; document.documentElement.dataset.theme=nx;
+    try{ localStorage.setItem("theme",nx); }catch{}
+  };
+  try{ const t=localStorage.getItem("theme"); if(t) document.documentElement.dataset.theme=t; }catch{}
+  setConnUI();
+  if("serial" in navigator){
+    navigator.serial.addEventListener("disconnect", e=>{ if(e.target===port) onDisconnect(); });
+  } else {
+    notice("This browser can't open Bluetooth serial connections. Open this page in <b>Chrome or Edge (version 117 or newer)</b> on Windows.", true);
+  }
+}
+buildUI();
+</script>
+</body>
+</html>
