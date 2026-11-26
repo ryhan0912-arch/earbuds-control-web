@@ -1,6 +1,9 @@
 # Earbuds Control (web)
 
-A single-page web app for controlling **soundcore R50i NC / P30i (model A3959)** earbuds from a desktop browser, with no app install.
+A single-page web app for controlling soundcore earbuds from a desktop browser, with no app install.
+
+**Full controls:** soundcore R50i NC / P30i (A3959), soundcore R60i NC / P31i (D1202C / D1202).
+**Detected with device info and battery:** about 30 more soundcore models.
 
 **Open it:** https://ryhan0912-arch.github.io/earbuds-control-web/ in Chrome or Edge on Windows, macOS, Linux or ChromeOS.
 

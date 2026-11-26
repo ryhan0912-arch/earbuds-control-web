@@ -101,7 +101,8 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
       <div class="bud"><span class="sub">Left</span><b id="battL">–</b><div class="meter"><i id="mL"></i></div><span class="sub" id="chgL"></span></div>
       <div class="bud"><span class="sub">Right</span><b id="battR">–</b><div class="meter"><i id="mR"></i></div><span class="sub" id="chgR"></span></div>
     </div>
-    <p class="sub" id="twsText" style="margin:10px 0 0"></p>
+    <p class="sub" id="caseText" style="margin:10px 0 0"></p>
+    <p class="sub" id="twsText" style="margin:6px 0 0"></p>
   </section>
 
   <section class="card ctl" id="soundCard">
@@ -123,8 +124,10 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
       </div>
       <div id="adaptiveBox">
         <div class="row" style="border:0"><label>Current adaptive level</label><span id="adaptiveVal">–</span></div>
-        <div class="row"><label>Adaptive sensitivity <span class="sub" id="sensVal"></span></label>
+        <div class="row" id="sensRow"><label>Adaptive sensitivity <span class="sub" id="sensVal"></span></label>
           <input type="range" id="sens" min="0" max="10" step="1" style="max-width:180px"></div>
+        <div class="row" id="rtRow"><label>Real-time adaptive noise cancelling</label>
+          <label class="switch"><input type="checkbox" id="realtime"><span></span></label></div>
       </div>
       <div id="sceneBox" style="margin-top:10px">
         <div class="seg" id="sceneSeg">
@@ -132,6 +135,12 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
           <button data-v="1">Outdoor</button>
           <button data-v="2">Indoor</button>
         </div>
+      </div>
+    </div>
+    <div id="trBox" style="margin-top:14px">
+      <div class="seg" id="trSeg">
+        <button data-v="0">Full transparency</button>
+        <button data-v="1">Vocal mode</button>
       </div>
     </div>
     <div class="row" id="windRow" style="margin-top:8px">
@@ -158,7 +167,7 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
     <div style="margin-top:12px"><button id="btnReset">Reset controls to default</button></div>
   </section>
 
-  <section class="card ctl" id="cycleCard">
+  <section class="card ctl" id="cycleCard" data-feat="cycle">
     <h2>Mode switch cycle</h2>
     <p class="sub" style="margin-top:0">Modes the "Sound mode" touch action cycles through.</p>
     <div class="chips">
@@ -170,16 +179,23 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
 
   <section class="card ctl" id="miscCard">
     <h2>General</h2>
-    <div class="row"><label>Gaming mode (low latency)<div class="sub" id="gameNote"></div></label><label class="switch"><input type="checkbox" id="gaming"><span></span></label></div>
-    <div class="row"><label>3D surround sound</label><label class="switch"><input type="checkbox" id="surround"><span></span></label></div>
-    <div class="row"><label>Touch tone</label><label class="switch"><input type="checkbox" id="touchTone"><span></span></label></div>
-    <div class="row"><label>Low battery voice prompt</label><label class="switch"><input type="checkbox" id="lowBatt"><span></span></label></div>
-    <div class="row"><label>Auto power off</label><label class="switch"><input type="checkbox" id="apoOn"><span></span></label></div>
-    <div class="row"><label>Power off after</label>
+    <div class="row" data-feat="spatial"><label>Spatial audio</label><label class="switch"><input type="checkbox" id="spatial"><span></span></label></div>
+    <div class="row" data-feat="spatial"><label>Spatial audio mode</label>
+      <select id="spatialMode"><option value="0">Music</option><option value="2">Movie</option><option value="3">Gaming</option></select></div>
+    <div class="row" data-feat="ldac"><label>LDAC (high-resolution audio)<div class="sub">Uses more battery; needs an LDAC-capable phone</div></label><label class="switch"><input type="checkbox" id="ldac"><span></span></label></div>
+    <div class="row" data-feat="gaming"><label>Gaming mode (low latency)<div class="sub" id="gameNote"></div></label><label class="switch"><input type="checkbox" id="gaming"><span></span></label></div>
+    <div class="row" data-feat="surround"><label>3D surround sound</label><label class="switch"><input type="checkbox" id="surround"><span></span></label></div>
+    <div class="row" data-feat="touchTone"><label>Touch tone</label><label class="switch"><input type="checkbox" id="touchTone"><span></span></label></div>
+    <div class="row" data-feat="lowBatt"><label>Low battery voice prompt</label><label class="switch"><input type="checkbox" id="lowBatt"><span></span></label></div>
+    <div class="row" data-feat="lhv"><label>Limit high volume</label><label class="switch"><input type="checkbox" id="lhvOn"><span></span></label></div>
+    <div class="row" data-feat="lhv"><label>Volume limit</label>
+      <select id="lhvDb"><option>75</option><option>80</option><option>85</option><option>90</option><option>95</option><option>100</option></select></div>
+    <div class="row" data-feat="apo"><label>Auto power off</label><label class="switch"><input type="checkbox" id="apoOn"><span></span></label></div>
+    <div class="row" data-feat="apo"><label>Power off after</label>
       <select id="apoDur"><option value="0">10 minutes</option><option value="1">20 minutes</option><option value="2">30 minutes</option><option value="3">60 minutes</option></select></div>
   </section>
 
-  <section class="card ctl" id="dualCard">
+  <section class="card ctl" id="dualCard" data-feat="dual">
     <h2>Dual connection</h2>
     <div class="row"><label>Connect to two devices at once</label><label class="switch"><input type="checkbox" id="dual"><span></span></label></div>
     <ul class="devs" id="devList"></ul>
@@ -231,13 +247,16 @@ const MODEL_BY_CODE = Object.fromEntries(Object.values(MODELS));
 Object.assign(MODEL_BY_CODE, { A3004:"soundcore Q20i", A3028:"soundcore Life Q30", A3909:"soundcore Liberty 2 Pro",
   A3930:"soundcore Liberty 2 Pro+", A3931:"soundcore Life Dot 2 NC", A3951:"soundcore Liberty Air 2 Pro" });
 const ALL_UUIDS = [...Object.keys(MODELS).map(s => VENDOR_PREFIX + s), SPP_UUID];
-const SUPPORTED = new Set(["A3959"]); // models with full controls in this app
+// model code -> profile with full controls (see PROFILES below)
+const PROFILE_OF = { A3959:"A3959", D1202:"D1202", D1202C:"D1202" };
+const SUPPORTED = new Set(Object.keys(PROFILE_OF));
 const CMD = {
   STATE:[0x01,0x01], TWS:[0x01,0x02], BATT:[0x01,0x03], CHG:[0x01,0x04], SERIAL:[0x01,0x05],
   GAMING_UPD:[0x01,0x11], SOUND_UPD:[0x06,0x01], SET_SOUND:[0x06,0x81], SET_CYCLE:[0x06,0x82],
   SET_EQ_DRC:[0x02,0x83], SET_SURROUND:[0x02,0x86], SET_TOUCH_TONE:[0x01,0x83], SET_GAMING:[0x01,0x87],
   SET_APO:[0x01,0x86], SET_LOWBATT:[0x10,0x82], SET_BUTTON:[0x04,0x81], RESET_BUTTONS:[0x04,0x82],
-  DUAL_LIST:[0x0b,0x01], SET_DUAL:[0x0b,0x84]
+  DUAL_LIST:[0x0b,0x01], SET_DUAL:[0x0b,0x84],
+  SET_EQ_HEARID:[0x03,0x87], SET_SPATIAL:[0x10,0x81], SET_LDAC:[0x01,0xff], LDAC_UPD:[0x01,0x7f], SET_LHV:[0x20,0x82]
 };
 const PRESETS = [
   ["Soundcore Signature",0,[0,0,0,0,0,0,0,0]], ["Acoustic",1,[40,10,20,20,40,40,40,20]],
@@ -257,6 +276,16 @@ const BAND_HZ = ["100","200","400","800","1.6k","3.2k","6.4k","12.8k"];
 const ACTIONS = [[0,"Volume up"],[1,"Volume down"],[2,"Previous track"],[3,"Next track"],[4,"Sound mode"],[5,"Voice assistant"],[6,"Play / pause"],[15,"Disabled"]];
 // state order: LS, RS, LD, RD, LT, RT, LL, RL ; button ids: single=2 double=0 triple=5 long=1
 const PRESS = [["Single tap",2],["Double tap",0],["Triple tap",5],["Long press",1]];
+const MINIMAL_ACTIONS = new Set([0,1,2,3,6,15]);
+// Per-model profiles: state layout parser, sound-mode format, EQ format and which settings exist.
+const PROFILES = {
+  A3959: { minLen:69, parse:parseA3959, sound:"a3959", eq:"drc", customTail:[0,0], singleMinimal:false,
+           feats:["cycle","gaming","surround","touchTone","lowBatt","apo","dual"] },
+  D1202: { minLen:139, parse:parseD1202, sound:"d1202", eq:"hearid", customTail:[0,-120], singleMinimal:true,
+           feats:["touchTone","lowBatt","apo","dual","ldac","lhv","spatial"] }
+};
+const prof = () => PROFILES[PROFILE_OF[S.modelCode]];
+const has = f => !!prof()?.feats.includes(f);
 
 /* ---------- state ---------- */
 let active=null, connected=false;           // the Conn currently being controlled
@@ -342,8 +371,9 @@ class Conn{
 const isSoundcorePort = p => { const u=String((p.getInfo?p.getInfo():{}).bluetoothServiceClassId||"").toLowerCase(); return ALL_UUIDS.includes(u); };
 function identify(uuid, serial){
   let code=null;
-  if(serial){ const c="A"+serial.slice(0,4); if(MODEL_BY_CODE[c]) code=c; }
-  if(!code && uuid.startsWith(VENDOR_PREFIX)){ const m=MODELS[uuid.slice(VENDOR_PREFIX.length)]; if(m) code=m[0]; }
+  // the vendor service ID names the exact model; the serial prefix is the fallback for older models
+  if(uuid.startsWith(VENDOR_PREFIX)){ const m=MODELS[uuid.slice(VENDOR_PREFIX.length)]; if(m) code=m[0]; }
+  if(!code && serial){ const c="A"+serial.slice(0,4); if(MODEL_BY_CODE[c]) code=c; }
   return { code, name: code ? MODEL_BY_CODE[code] : "Unknown soundcore device" };
 }
 // Open a port, ask it for its serial number, and work out which model it is.
@@ -429,7 +459,7 @@ async function startSession(r){
   S.modelCode=r.code; S.modelName=r.name; S.serial=r.serial||undefined;
   try{ if(r.serial) localStorage.setItem("lastSerial", r.serial); }catch{}
   $("introCard").hidden=true;
-  setConnUI(); render();
+  applyProfileUI(); setConnUI(); render();
   if(SUPPORTED.has(r.code)) await requestAll();
   else {
     notice(`Connected to <b></b>. Full controls are only available for the soundcore R50i NC / P30i so far,
@@ -459,7 +489,10 @@ function setConnUI(){
   $("connectBtn").textContent = connected ? "Disconnect" : "Connect";
   $("addDevBtn").hidden = connected;
   const unsupported = connected && S.modelCode !== undefined && !SUPPORTED.has(S.modelCode);
-  document.querySelectorAll(".ctl").forEach(c=>{ c.hidden=unsupported; c.classList.toggle("disabled-ui", !connected || !S.loaded); });
+  document.querySelectorAll(".ctl").forEach(c=>{
+    c.hidden = unsupported || (!!c.dataset.feat && connected && !has(c.dataset.feat));
+    c.classList.toggle("disabled-ui", !connected || !S.loaded);
+  });
   if(!connected){ $("devName").textContent="Not connected"; }
 }
 async function requestAll(){
@@ -468,8 +501,10 @@ async function requestAll(){
 }
 const is = (c, k) => c[0]===k[0] && c[1]===k[1];
 function handlePacket(cmd, body){
-  if(is(cmd,CMD.STATE)) { if(SUPPORTED.has(S.modelCode) && body.length>=69) parseState(body); }
-  else if(is(cmd,CMD.SOUND_UPD) && body.length>=7) { S.sound = parseSound(body,0); render(); }
+  const p=prof();
+  if(is(cmd,CMD.STATE)) { if(p && body.length>=p.minLen) p.parse(body); }
+  else if(is(cmd,CMD.SOUND_UPD) && p) { if(p.sound==="d1202" && body.length>=8) S.sound=parseSoundD1202(body,0); else if(p.sound==="a3959" && body.length>=7) S.sound=parseSound(body,0); render(); }
+  else if(is(cmd,CMD.LDAC_UPD) && body.length>=1) { S.ldac=body[0]===1; render(); }
   else if(is(cmd,CMD.BATT) && body.length>=2) { S.battL=body[0]; S.battR=body[1]; render(); }
   else if(is(cmd,CMD.CHG) && body.length>=2) { S.chgL=body[0]===1; S.chgR=body[1]===1; render(); }
   else if(is(cmd,CMD.TWS) && body.length>=2) { S.host=body[0]; S.twsConnected=body[1]===1; render(); }
@@ -482,7 +517,38 @@ function parseSound(b,o){
   return { ambient:b[o], manual:(b[o+1]>>4)&0xf, adaptive:b[o+1]&0xf, ncMode:b[o+3],
            windOn:!!(b[o+4]&1), windDetected:!!(b[o+4]&2), sens:b[o+5], scene:b[o+6] };
 }
-function parseState(b){
+function parseSoundD1202(b,o){
+  return { ambient:b[o], manual:(b[o+1]>>4)&0xf, adaptive:b[o+1]&0xf, transparency:b[o+2], ncMode:b[o+3],
+           windOn:!!(b[o+4]&1), windDetected:!!(b[o+4]&2), scene:b[o+6], realtime:b[o+7]===1 };
+}
+function parseHeader(b){ // shared start of the state packet for TWS earbuds
+  S.host=b[0]; S.twsConnected=b[1]===1;
+  S.battL=b[2]; S.battR=b[3]; S.chgL=b[4]===1; S.chgR=b[5]===1;
+  S.fwL=fw(b.slice(6,11)); S.fwR=fw(b.slice(11,16));
+  S.serial=ascii(b.slice(16,32));
+}
+function finishState(){
+  S.loaded=true;
+  setConnUI(); render();
+  if(S.dual) send(CMD.DUAL_LIST,[],"request dual-connection devices");
+}
+// soundcore R60i NC / P31i (D1202 family)
+function parseD1202(b){
+  parseHeader(b);
+  S.caseBatt=b[37];
+  S.eqPreset=b[38]|(b[39]<<8);
+  S.eqBands=Array.from(b.slice(40,50),x=>x-120);
+  S.hearId=Array.from(b.slice(61,109)); // enabled, 2x10 bands, time(4), type, 2x10 custom bands, genre(2)
+  S.buttons=Array.from(b.slice(110,118));
+  S.sound=parseSoundD1202(b,119);
+  S.touchTone=b[128]===1; S.lowBatt=b[129]===1; S.ldac=b[130]===1; S.dual=b[131]===1;
+  S.apoOn=b[132]===1; S.apoDur=b[133];
+  S.lhvOn=b[134]===1; S.lhvDb=b[135];
+  S.spatialOn=b[137]===1; S.spatialMode=b[138];
+  finishState();
+}
+// soundcore R50i NC / P30i (A3959)
+function parseA3959(b){
   let o=0;
   S.host=b[o]; S.twsConnected=b[o+1]===1; o+=2;
   S.battL=b[o]; S.battR=b[o+1]; S.chgL=b[o+2]===1; S.chgR=b[o+3]===1; o+=4;
@@ -501,9 +567,7 @@ function parseState(b){
   S.apoOn=b[o]===1; S.apoDur=b[o+1]; o+=2;
   S.lowBatt=b[o]===1; o+=1;
   S.gaming=b[o]===1; o+=1;
-  S.loaded=true;
-  setConnUI(); render();
-  if(S.dual) send(CMD.DUAL_LIST,[],"request dual-connection devices");
+  finishState();
 }
 function parseDual(b){
   const total=b[0], idx=b[1];
@@ -530,6 +594,7 @@ function render(){
   $("battL").textContent=battText(S.battL); $("battR").textContent=battText(S.battR);
   $("mL").style.width=(battPct(S.battL)||0)+"%"; $("mR").style.width=(battPct(S.battR)||0)+"%";
   $("chgL").textContent=S.chgL?"⚡ Charging":""; $("chgR").textContent=S.chgR?"⚡ Charging":"";
+  $("caseText").textContent = battPct(S.caseBatt)!=null ? "Charging case: "+battPct(S.caseBatt)+"%" : "";
   $("twsText").textContent = S.twsConnected===undefined ? "" :
      (S.twsConnected ? "Both earbuds connected" : "Only one earbud connected") + " · main: " + (S.host===1?"right":"left");
   $("iModel").textContent=(S.modelName||"–")+(S.modelCode?" ("+S.modelCode+")":""); $("iSerial").textContent=S.serial||"–";
@@ -544,8 +609,13 @@ function render(){
     $("adaptiveBox").hidden = sm.ncMode!==1;
     $("sceneBox").hidden = sm.ncMode!==2;
     $("manual").value=sm.manual; $("manualVal").textContent=sm.manual+" / 5";
-    $("adaptiveVal").textContent=sm.adaptive+" / 5";
-    $("sens").value=sm.sens; $("sensVal").textContent=sm.sens+" / 10";
+    const d1202 = prof()?.sound==="d1202";
+    $("adaptiveVal").textContent = d1202 ? (["Weak","Moderate","Strong"][sm.adaptive]||"–") : sm.adaptive+" / 5";
+    $("sensRow").hidden = d1202; $("rtRow").hidden = !d1202;
+    if(!d1202){ $("sens").value=sm.sens; $("sensVal").textContent=sm.sens+" / 10"; }
+    $("realtime").checked=!!sm.realtime;
+    $("trBox").hidden = !d1202 || sm.ambient!==1;
+    pressSeg("trSeg", sm.transparency);
     pressSeg("sceneSeg", sm.scene);
     $("windRow").hidden = sm.ambient===2;
     $("wind").checked=sm.windOn; $("windDet").textContent = sm.windDetected ? "Wind detected right now" : "";
@@ -571,6 +641,9 @@ function render(){
   $("gaming").checked=!!S.gaming; $("gaming").disabled=!gameOk;
   $("gameNote").textContent = gameOk ? "" : "Needs firmware 01.60 or newer";
   $("dual").checked=!!S.dual;
+  $("ldac").checked=!!S.ldac;
+  $("lhvOn").checked=!!S.lhvOn; if(S.lhvDb) $("lhvDb").value=String(S.lhvDb); $("lhvDb").disabled=!S.lhvOn;
+  $("spatial").checked=!!S.spatialOn; if(S.spatialMode!=null) $("spatialMode").value=String(S.spatialMode);
   const ul=$("devList"); ul.innerHTML="";
   if(S.dual && S.dualDevices){ for(const d of S.dualDevices){ const li=document.createElement("li"); li.innerHTML=`<span></span><span class="sub"></span>`; li.firstChild.textContent=d.name||d.mac; li.lastChild.textContent=d.isConn?"Connected":"Paired"; ul.appendChild(li);} }
   $("devRefresh").hidden=!S.dual;
@@ -578,7 +651,21 @@ function render(){
 const fmtDb = v => (v>0?"+":"")+(v/10).toFixed(1);
 
 /* ---------- actions ---------- */
-function soundBytes(sm){ return [sm.ambient, ((sm.manual&0xf)<<4)|(sm.adaptive&0xf), sm.ambient, sm.ncMode, (sm.windOn?1:0)|(sm.windDetected?2:0), sm.sens, sm.scene]; }
+function soundBytes(sm){
+  const anc=((sm.manual&0xf)<<4)|(sm.adaptive&0xf), wind=(sm.windOn?1:0)|(sm.windDetected?2:0);
+  if(prof()?.sound==="d1202") return [sm.ambient, anc, sm.transparency, sm.ncMode, wind, 0, sm.scene, sm.realtime?1:0];
+  return [sm.ambient, anc, sm.ambient, sm.ncMode, wind, sm.sens, sm.scene];
+}
+// Apply a mode switch to the earbuds' current layout (used by profile-aware UI applying)
+function applyProfileUI(){
+  const p=prof();
+  document.querySelectorAll("[data-feat]").forEach(el=>{ el.hidden = !p || !p.feats.includes(el.dataset.feat); });
+  // single tap on some models only allows a reduced action list
+  for(const side of ["L","R"]){
+    const sel=$("bt0"+side); if(!sel) continue;
+    [...sel.options].forEach(o=>{ o.hidden = !!p?.singleMinimal && !MINIMAL_ACTIONS.has(+o.value); });
+  }
+}
 async function setSound(patch){
   if(!S.sound) return;
   const prev=S.sound; const next={...prev,...patch};
@@ -620,6 +707,16 @@ function queueEq(){ clearTimeout(eqTimer); eqTimer=setTimeout(sendEq,180); }
 async function sendEq(){
   const id=S.eqPreset; const bands=S.eqBands;
   const raw=bands.map(v=>Math.max(-120,Math.min(134,v))+120);
+  if(prof()?.eq==="hearid"){
+    // Equalizer with HearID block (D1202 family). HearID is sent disabled so the EQ below takes effect.
+    const h=S.hearId||new Array(48).fill(0);
+    const volAdj=h.slice(1,21), time=h.slice(21,25), type=h[25], custom=h.slice(26,46), genre=h.slice(46,48);
+    const both=[...raw,...raw];
+    const interleaved=both.flatMap(x=>[x,0]);
+    await send(CMD.SET_EQ_HEARID, [id&0xff, id>>8, ...genre, ...both, 0,0, 0, ...volAdj, ...time, type, ...custom, ...interleaved, 0,0], "set equalizer");
+    S.spatialOn=false; render(); // the device turns spatial audio off when an EQ is applied
+    return;
+  }
   const d=drc(bands).map(v=>v+120);
   await send(CMD.SET_EQ_DRC, [id&0xff, id>>8, ...raw, ...d], "set equalizer");
 }
@@ -627,8 +724,13 @@ function choosePreset(id){
   const p=PRESETS.find(x=>x[1]===id);
   S.eqPreset=id;
   if(p) S.eqBands=[...p[2],0,-120];
-  else S.eqBands=[...S.eqBands.slice(0,8),0,0];
+  else S.eqBands=[...S.eqBands.slice(0,8),...(prof()?.customTail||[0,0])];
   render(); sendEq();
+}
+async function setSpatial(on, mode){
+  S.spatialMode=mode;
+  if(on){ S.spatialOn=true; render(); await send(CMD.SET_SPATIAL,[1,0,mode],"spatial audio on"); }
+  else { S.spatialOn=false; render(); S.eqBands[8]=0; S.eqBands[9]=-120; await sendEq(); } // the official app turns it off by re-sending the EQ
 }
 async function setButton(k, side, action){
   const [ ,buttonId]=PRESS[k]; const idx=k*2+(side==="L"?0:1);
@@ -652,7 +754,8 @@ function buildUI(){
     eq.appendChild(d);
     d.querySelector("input").addEventListener("input",e=>{
       if(!S.eqBands) return;
-      S.eqBands[i]=+e.target.value; S.eqPreset=CUSTOM_ID; S.eqBands[8]=0; S.eqBands[9]=0;
+      const tail=prof()?.customTail||[0,0];
+      S.eqBands[i]=+e.target.value; S.eqPreset=CUSTOM_ID; S.eqBands[8]=tail[0]; S.eqBands[9]=tail[1];
       $("bv"+i).textContent=fmtDb(+e.target.value); $("preset").value=String(CUSTOM_ID); queueEq();
     });
   });
@@ -677,6 +780,13 @@ function buildUI(){
   $("sens").onchange=e=>setSound({sens:+e.target.value});
   $("sens").oninput=e=>$("sensVal").textContent=e.target.value+" / 10";
   $("wind").onchange=e=>setSound({windOn:e.target.checked});
+  $("realtime").onchange=e=>setSound({realtime:e.target.checked});
+  $("trSeg").onclick=e=>{ const b=e.target.closest("button"); if(b) setSound({transparency:+b.dataset.v}); };
+  $("ldac").onchange=e=>flag(CMD.SET_LDAC,"ldac",e.target.checked,"LDAC");
+  const lhv=()=>{ S.lhvOn=$("lhvOn").checked; S.lhvDb=+$("lhvDb").value; render(); send(CMD.SET_LHV,[S.lhvOn?1:0,S.lhvDb],"limit high volume"); };
+  $("lhvOn").onchange=lhv; $("lhvDb").onchange=lhv;
+  $("spatial").onchange=e=>setSpatial(e.target.checked, +$("spatialMode").value);
+  $("spatialMode").onchange=e=>{ if(S.spatialOn) setSpatial(true, +e.target.value); else S.spatialMode=+e.target.value; };
 
   const cyc=()=>{ const v=($("cyNc").checked?1:0)|($("cyTr").checked?2:0)|($("cyNo").checked?4:0);
     if(!v){ render(); return; } S.cycle=v; send(CMD.SET_CYCLE,[v],"set mode cycle"); };
