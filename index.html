@@ -82,6 +82,7 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
     <h1>Earbuds Control<small id="devName">Not connected</small></h1>
     <span class="status"><span class="dot" id="dot"></span><span id="connText">Disconnected</span></span>
     <button id="themeBtn" title="Toggle theme">◐</button>
+    <button id="addDevBtn" title="Give this page access to another soundcore device">+ Add device</button>
     <button class="primary" id="connectBtn">Connect</button>
   </div>
 </header>
@@ -89,9 +90,8 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
 <main>
   <div class="card wide" id="introCard">
     <div class="notice" id="notice">
-      Works with <b>soundcore R50i NC / P30i</b> (model A3959) in <b>Chrome or Edge on Windows</b>.
-      Make sure the earbuds are paired and connected to this PC, then click <b>Connect</b> and pick the
-      entry for your earbuds (it may be listed as <i>JL_SPP</i> or the earbuds' name).
+      Looking for your soundcore devices… Open this page in <b>Chrome or Edge</b> on a computer
+      with the earbuds paired and connected.
     </div>
   </div>
 
@@ -210,7 +210,28 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
 <script>
 "use strict";
 /* ---------- constants ---------- */
-const SERVICE_UUID = "0cf12d31-fac3-4553-bd80-d6832e7b395b";
+// Every soundcore model exposes a vendor RFCOMM service 0cf12d31-fac3-4553-bd80-d6832e7XXXXX,
+// where the last 5 hex digits identify the model. Older models use the standard serial port service.
+const VENDOR_PREFIX = "0cf12d31-fac3-4553-bd80-d6832e7";
+const SPP_UUID = "00001101-0000-1000-8000-00805f9b34fb";
+const MODELS = {
+  b3005:["A3005","soundcore Q11i"], b3035:["A3035","soundcore Space One"], b3040:["A3040","soundcore Space Q45"],
+  b3062:["A3062","soundcore Space One Pro"], b3116:["A3116","soundcore Motion+"], b3130:["A3130","soundcore Motion X600"],
+  b3330:["A3330","soundcore C30i"], b3388:["A3388","soundcore AeroClip"], b3876:["A3876","soundcore V20i"],
+  b3933:["A3933","soundcore Life Note 3"], b3936:["A3936","soundcore Space A40"], b3939:["A3939","soundcore Life P3"],
+  b3944:["A3944","soundcore Life P2 Mini"], b3945:["A3945","soundcore Life Note 3S"], b3947:["A3947","soundcore Liberty 4 NC"],
+  b3948:["A3948","soundcore A20i"], b3949:["A3949","soundcore P20i / P25i / R50i"], b3952:["A3952","soundcore Liberty 3 Pro"],
+  b3953:["A3953","soundcore Liberty 4"], b3954:["A3954","soundcore Liberty 4 Pro"], b3955:["A3955","soundcore P40i"],
+  b3957:["A3957","soundcore Liberty 5"], b3958:["A3958","soundcore A30i"], b395b:["A3959","soundcore R50i NC / P30i"],
+  b3968:["A3968","soundcore Sport X20"], b6611:["A6611","soundcore Sleep A20"], d1101:["D1101","soundcore C50i"],
+  d1202:["D1202","soundcore P31i"], "1202c":["D1202C","soundcore R60i NC"], d1301:["D1301","soundcore Sleep A30"],
+  d1402:["D1402","soundcore Space 2"]
+};
+const MODEL_BY_CODE = Object.fromEntries(Object.values(MODELS));
+Object.assign(MODEL_BY_CODE, { A3004:"soundcore Q20i", A3028:"soundcore Life Q30", A3909:"soundcore Liberty 2 Pro",
+  A3930:"soundcore Liberty 2 Pro+", A3931:"soundcore Life Dot 2 NC", A3951:"soundcore Liberty Air 2 Pro" });
+const ALL_UUIDS = [...Object.keys(MODELS).map(s => VENDOR_PREFIX + s), SPP_UUID];
+const SUPPORTED = new Set(["A3959"]); // models with full controls in this app
 const CMD = {
   STATE:[0x01,0x01], TWS:[0x01,0x02], BATT:[0x01,0x03], CHG:[0x01,0x04], SERIAL:[0x01,0x05],
   GAMING_UPD:[0x01,0x11], SOUND_UPD:[0x06,0x01], SET_SOUND:[0x06,0x81], SET_CYCLE:[0x06,0x82],
@@ -238,7 +259,8 @@ const ACTIONS = [[0,"Volume up"],[1,"Volume down"],[2,"Previous track"],[3,"Next
 const PRESS = [["Single tap",2],["Double tap",0],["Triple tap",5],["Long press",1]];
 
 /* ---------- state ---------- */
-let port=null, reader=null, writer=null, rxBuf=new Uint8Array(0), connected=false;
+let active=null, connected=false;           // the Conn currently being controlled
+let detecting=false, userDisconnected=false, choosing=null;
 const S = {}; // device state
 let dualPackets = [];
 
@@ -259,94 +281,194 @@ function buildPacket(cmd, body=[]){
   return new Uint8Array(p);
 }
 async function send(cmd, body=[], note=""){
-  if(!writer) return;
+  if(!active) return;
   const p = buildPacket(cmd, body);
   log("→", p, note);
-  await writer.write(p);
+  await active.write(p);
 }
 const ascii = b => String.fromCharCode(...b).replace(/\0+$/,"");
 
-/* ---------- connection ---------- */
-async function connect(){
-  if(!("serial" in navigator)){
-    notice("This browser can't open Bluetooth serial connections. Open this page in <b>Chrome or Edge (version 117 or newer)</b> on Windows.", true);
-    return;
+/* ---------- one Bluetooth serial connection ---------- */
+class Conn{
+  constructor(port){
+    this.port=port; const info=port.getInfo?port.getInfo():{};
+    this.uuid=String(info.bluetoothServiceClassId||"").toLowerCase();
+    this.buf=new Uint8Array(0); this.isOpen=false; this.onPacket=null; this.onClose=null;
   }
+  async open(ms=8000){
+    let timedOut=false;
+    const opening=this.port.open({baudRate:115200}).then(()=>{ if(timedOut){ this.port.close().catch(()=>{}); throw new Error("late"); } });
+    opening.catch(()=>{});
+    await Promise.race([opening, new Promise((_,rej)=>setTimeout(()=>{ timedOut=true; rej(new Error("not reachable")); }, ms))]);
+    this.isOpen=true; this.writer=this.port.writable.getWriter(); this.loop();
+  }
+  async loop(){
+    while(this.isOpen && this.port.readable){
+      this.reader=this.port.readable.getReader();
+      try{ for(;;){ const {value,done}=await this.reader.read(); if(done) break; if(value) this.feed(value); } }
+      catch(e){ if(this.isOpen) log("!", [], "read error: "+e.message); }
+      finally{ try{ this.reader.releaseLock(); }catch{} }
+      if(!this.port.readable) break;
+    }
+    if(this.isOpen){ this.isOpen=false; try{ this.writer.releaseLock(); }catch{} this.onClose && this.onClose(this); }
+  }
+  feed(chunk){
+    const b=new Uint8Array(this.buf.length+chunk.length); b.set(this.buf); b.set(chunk,this.buf.length); this.buf=b;
+    for(;;){
+      let start=-1;
+      for(let i=0;i+4<this.buf.length;i++){ const x=this.buf; if(x[i]===0x09&&x[i+1]===0xff&&x[i+2]===0&&x[i+3]===0&&x[i+4]===0x01){start=i;break;} }
+      if(start<0){ if(this.buf.length>4) this.buf=this.buf.slice(this.buf.length-4); return; }
+      if(start>0) this.buf=this.buf.slice(start);
+      if(this.buf.length<9) return;
+      const len=this.buf[7]|(this.buf[8]<<8);
+      if(len<10||len>2048){ this.buf=this.buf.slice(1); continue; }
+      if(this.buf.length<len) return;
+      const pkt=this.buf.slice(0,len); this.buf=this.buf.slice(len);
+      const sum=pkt.slice(0,len-1).reduce((a,x)=>(a+x)&0xff,0);
+      log("←", pkt, sum===pkt[len-1] ? "" : "bad checksum");
+      if(sum===pkt[len-1] && this.onPacket) this.onPacket([pkt[5],pkt[6]], pkt.slice(9,len-1));
+    }
+  }
+  async write(bytes){ if(this.isOpen) await this.writer.write(bytes); }
+  async close(){
+    if(!this.isOpen) return; this.isOpen=false;
+    try{ await this.reader?.cancel(); }catch{}
+    try{ this.writer?.releaseLock(); }catch{}
+    try{ await this.port.close(); }catch{}
+  }
+}
+
+/* ---------- device detection ---------- */
+const isSoundcorePort = p => { const u=String((p.getInfo?p.getInfo():{}).bluetoothServiceClassId||"").toLowerCase(); return ALL_UUIDS.includes(u); };
+function identify(uuid, serial){
+  let code=null;
+  if(serial){ const c="A"+serial.slice(0,4); if(MODEL_BY_CODE[c]) code=c; }
+  if(!code && uuid.startsWith(VENDOR_PREFIX)){ const m=MODELS[uuid.slice(VENDOR_PREFIX.length)]; if(m) code=m[0]; }
+  return { code, name: code ? MODEL_BY_CODE[code] : "Unknown soundcore device" };
+}
+// Open a port, ask it for its serial number, and work out which model it is.
+async function probe(conn){
+  try{ await conn.open(8000); }catch{ return null; }
+  const serial = await new Promise(resolve=>{
+    const t=setTimeout(()=>resolve(null), 3000);
+    conn.onPacket=(cmd,body)=>{
+      if(is(cmd,CMD.SERIAL) && body.length>=26){ clearTimeout(t); resolve(ascii(body.slice(10,26))); }
+      else if(is(cmd,CMD.STATE) && body.length>=32){ clearTimeout(t); resolve(ascii(body.slice(16,32))); }
+    };
+    conn.write(buildPacket(CMD.SERIAL)).catch(()=>{});
+  });
+  conn.onPacket=null;
+  if(!serial && !conn.uuid.startsWith(VENDOR_PREFIX)){ await conn.close(); return null; } // generic serial port that didn't answer
+  return { conn, serial, ...identify(conn.uuid, serial) };
+}
+function setStatus(text){ $("connText").textContent=text; }
+async function autoDetect(){
+  if(detecting || active || choosing || !("serial" in navigator)) return;
+  detecting=true; setStatus("Searching…");
   try{
-    port = await navigator.serial.requestPort({
-      filters:[{ bluetoothServiceClassId: SERVICE_UUID }],
-      allowedBluetoothServiceClassIds:[SERVICE_UUID]
-    });
-    await port.open({ baudRate: 115200 });
-  }catch(e){
-    notice(`Couldn't open the earbuds: ${e.message}<br>Check they are out of the case, paired and connected to this PC, then try again.`, true);
-    port=null; return;
+    const ports=(await navigator.serial.getPorts()).filter(isSoundcorePort);
+    if(!ports.length){ showFirstTime(); return; }
+    const found=(await Promise.all(ports.map(p=>probe(new Conn(p))))).filter(Boolean);
+    if(!found.length){
+      notice(`No soundcore device is turned on right now. Take your earbuds out of the case; this page connects as soon as they're on.
+        <div style="margin-top:10px"><button id="addDevBtn2">Add another device</button></div>`);
+      $("addDevBtn2").onclick=addDevice;
+      return;
+    }
+    if(found.length===1) await startSession(found[0]);
+    else showChooser(found);
+  } finally { detecting=false; setConnUI(); }
+}
+function showFirstTime(){
+  notice(`<b>One-time setup:</b> click <b>Add device</b> and pick your soundcore device
+    (it may be listed as <i>JL_SPP</i> or by its name). After that, this page finds and connects to it by itself every time you open it.
+    <div style="margin-top:10px"><button class="primary" id="addDevBtn2">Add device</button></div>`);
+  $("addDevBtn2").onclick=addDevice;
+}
+function lastSerial(){ try{ return localStorage.getItem("lastSerial"); }catch{ return null; } }
+function showChooser(found){
+  const last=lastSerial();
+  found.sort((a,b)=>(b.serial===last)-(a.serial===last));
+  choosing=found;
+  notice(`<b>${found.length} soundcore devices are on.</b> Which one do you want to control?<ul class="devs" id="chooseList" style="margin-top:8px"></ul>`);
+  const ul=$("chooseList");
+  for(const r of found){
+    const li=document.createElement("li");
+    const left=document.createElement("span");
+    left.innerHTML=`<b></b><br><span class="sub"></span>`;
+    left.querySelector("b").textContent=r.name;
+    left.querySelector(".sub").textContent=(r.code||"")+(r.serial?" · serial …"+r.serial.slice(-6):"")+(r.serial&&r.serial===last?" · last used":"");
+    const btn=document.createElement("button"); btn.className="primary"; btn.textContent="Connect";
+    btn.onclick=async()=>{ const others=found.filter(x=>x!==r); choosing=null; await Promise.all(others.map(x=>x.conn.close())); await startSession(r); };
+    li.append(left,btn); ul.appendChild(li);
   }
-  writer = port.writable.getWriter();
-  connected = true; setConnUI();
-  $("introCard").hidden = true;
-  readLoop();
-  port.addEventListener("disconnect", onDisconnect);
-  await requestAll();
+  setStatus("Choose a device");
+}
+async function addDevice(){
+  if(!("serial" in navigator)) return;
+  userDisconnected=false;
+  let port;
+  try{
+    port=await navigator.serial.requestPort({
+      filters: ALL_UUIDS.map(u=>({ bluetoothServiceClassId:u })),
+      allowedBluetoothServiceClassIds: ALL_UUIDS
+    });
+  }catch{ return; } // picker closed
+  if(choosing){ const hit=choosing.find(r=>r.conn.port===port); if(hit){ $("chooseList")?.querySelectorAll("button")[choosing.indexOf(hit)]?.click(); return; } }
+  if(active){ if(active.port===port) return; userDisconnected=true; await active.close(); onDisconnect(); userDisconnected=false; }
+  setStatus("Connecting…");
+  const r=await probe(new Conn(port));
+  if(!r){ notice("Couldn't reach that device. Make sure it's out of the case, paired and connected to this PC, then try again.", true); setConnUI(); return; }
+  await startSession(r);
+}
+async function startSession(r){
+  for(const k of Object.keys(S)) delete S[k];
+  dualPackets=[];
+  active=r.conn; connected=true; userDisconnected=false; choosing=null;
+  active.onPacket=handlePacket; active.onClose=()=>onDisconnect();
+  S.modelCode=r.code; S.modelName=r.name; S.serial=r.serial||undefined;
+  try{ if(r.serial) localStorage.setItem("lastSerial", r.serial); }catch{}
+  $("introCard").hidden=true;
+  setConnUI(); render();
+  if(SUPPORTED.has(r.code)) await requestAll();
+  else {
+    notice(`Connected to <b></b>. Full controls are only available for the soundcore R50i NC / P30i so far,
+      so this page shows the device info and battery for this model.`);
+    $("notice").querySelector("b").textContent=r.name;
+    await send(CMD.BATT,[],"request battery"); await send(CMD.CHG,[],"request charging"); await send(CMD.SERIAL,[],"request serial/firmware");
+  }
 }
 async function disconnect(){
-  try{ if(reader){ await reader.cancel(); } }catch{}
-  try{ writer && writer.releaseLock(); }catch{}
-  try{ port && await port.close(); }catch{}
+  userDisconnected=true;
+  const c=active; active=null;
+  if(c) await c.close();
   onDisconnect();
+  notice("Disconnected. Click <b>Connect</b> to connect again.");
 }
 function onDisconnect(){
-  connected=false; port=null; reader=null; writer=null; rxBuf=new Uint8Array(0);
+  active=null; connected=false;
   setConnUI();
+  if(!userDisconnected){
+    notice("The device disconnected. This page reconnects by itself when it's back on.");
+    setTimeout(autoDetect, 3000);
+  }
 }
 function setConnUI(){
   $("dot").classList.toggle("on",connected);
-  $("connText").textContent = connected ? "Connected" : "Disconnected";
+  if(!detecting && !choosing) setStatus(connected ? "Connected" : "Disconnected");
   $("connectBtn").textContent = connected ? "Disconnect" : "Connect";
-  document.querySelectorAll(".ctl").forEach(c=>c.classList.toggle("disabled-ui", !connected || !S.loaded));
+  $("addDevBtn").hidden = connected;
+  const unsupported = connected && S.modelCode !== undefined && !SUPPORTED.has(S.modelCode);
+  document.querySelectorAll(".ctl").forEach(c=>{ c.hidden=unsupported; c.classList.toggle("disabled-ui", !connected || !S.loaded); });
   if(!connected){ $("devName").textContent="Not connected"; }
 }
-async function readLoop(){
-  while(port && port.readable){
-    reader = port.readable.getReader();
-    try{
-      while(true){
-        const {value, done} = await reader.read();
-        if(done) break;
-        if(value) onBytes(value);
-      }
-    }catch(e){ log("!", [], "read error: "+e.message); }
-    finally{ try{ reader.releaseLock(); }catch{} }
-    if(!connected) break;
-  }
-}
 async function requestAll(){
-  await send(CMD.STATE, [], "request state");
+  if(SUPPORTED.has(S.modelCode)) await send(CMD.STATE, [], "request state");
   setTimeout(()=>send(CMD.SERIAL, [], "request serial/firmware"), 300);
-}
-
-/* ---------- inbound parsing ---------- */
-function onBytes(chunk){
-  const b = new Uint8Array(rxBuf.length + chunk.length); b.set(rxBuf); b.set(chunk, rxBuf.length); rxBuf = b;
-  while(true){
-    let start = -1;
-    for(let i=0;i+4<rxBuf.length;i++){ if(rxBuf[i]===0x09&&rxBuf[i+1]===0xff&&rxBuf[i+2]===0&&rxBuf[i+3]===0&&rxBuf[i+4]===0x01){start=i;break;} }
-    if(start<0){ if(rxBuf.length>4) rxBuf=rxBuf.slice(rxBuf.length-4); return; }
-    if(start>0) rxBuf = rxBuf.slice(start);
-    if(rxBuf.length<9) return;
-    const len = rxBuf[7] | (rxBuf[8]<<8);
-    if(len<10 || len>2048){ rxBuf=rxBuf.slice(1); continue; }
-    if(rxBuf.length<len) return;
-    const pkt = rxBuf.slice(0,len); rxBuf = rxBuf.slice(len);
-    const sum = pkt.slice(0,len-1).reduce((a,x)=>(a+x)&0xff,0);
-    log("←", pkt, sum===pkt[len-1] ? "" : "bad checksum");
-    if(sum!==pkt[len-1]) continue;
-    handlePacket([pkt[5],pkt[6]], pkt.slice(9,len-1));
-  }
 }
 const is = (c, k) => c[0]===k[0] && c[1]===k[1];
 function handlePacket(cmd, body){
-  if(is(cmd,CMD.STATE)) { if(body.length>=69) parseState(body); }
+  if(is(cmd,CMD.STATE)) { if(SUPPORTED.has(S.modelCode) && body.length>=69) parseState(body); }
   else if(is(cmd,CMD.SOUND_UPD) && body.length>=7) { S.sound = parseSound(body,0); render(); }
   else if(is(cmd,CMD.BATT) && body.length>=2) { S.battL=body[0]; S.battR=body[1]; render(); }
   else if(is(cmd,CMD.CHG) && body.length>=2) { S.chgL=body[0]===1; S.chgR=body[1]===1; render(); }
@@ -404,13 +526,13 @@ function battText(l){ const p=battPct(l); return p==null ? "–" : p+"%"; }
 function pressSeg(id, v){ $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(+x.dataset.v===v))); }
 function render(){
   if(!connected) return;
-  $("devName").textContent = "soundcore R50i NC / P30i" + (S.serial? " · "+S.serial.slice(0,4):"");
+  $("devName").textContent = (S.modelName||"soundcore device") + (S.modelCode? " · "+S.modelCode:"");
   $("battL").textContent=battText(S.battL); $("battR").textContent=battText(S.battR);
   $("mL").style.width=(battPct(S.battL)||0)+"%"; $("mR").style.width=(battPct(S.battR)||0)+"%";
   $("chgL").textContent=S.chgL?"⚡ Charging":""; $("chgR").textContent=S.chgR?"⚡ Charging":"";
   $("twsText").textContent = S.twsConnected===undefined ? "" :
      (S.twsConnected ? "Both earbuds connected" : "Only one earbud connected") + " · main: " + (S.host===1?"right":"left");
-  $("iModel").textContent="A3959"; $("iSerial").textContent=S.serial||"–";
+  $("iModel").textContent=(S.modelName||"–")+(S.modelCode?" ("+S.modelCode+")":""); $("iSerial").textContent=S.serial||"–";
   $("iFwL").textContent=S.fwL||"–"; $("iFwR").textContent=S.fwR||"–";
 
   const sm=S.sound;
@@ -569,7 +691,13 @@ function buildUI(){
   $("dual").onchange=async e=>{ await flag(CMD.SET_DUAL,"dual",e.target.checked,"dual connection"); if(e.target.checked) setTimeout(()=>send(CMD.DUAL_LIST,[],"request dual-connection devices"),400); };
   $("devRefresh").onclick=()=>send(CMD.DUAL_LIST,[],"request dual-connection devices");
   $("refreshBtn").onclick=requestAll;
-  $("connectBtn").onclick=()=>connected?disconnect():connect();
+  $("connectBtn").onclick=async()=>{
+    if(connected) return disconnect();
+    userDisconnected=false;
+    const granted=("serial" in navigator) ? (await navigator.serial.getPorts()).filter(isSoundcorePort) : [];
+    if(granted.length) autoDetect(); else addDevice();
+  };
+  $("addDevBtn").onclick=addDevice;
 
   $("themeBtn").onclick=()=>{
     const cur=document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
@@ -579,7 +707,12 @@ function buildUI(){
   try{ const t=localStorage.getItem("theme"); if(t) document.documentElement.dataset.theme=t; }catch{}
   setConnUI();
   if("serial" in navigator){
-    navigator.serial.addEventListener("disconnect", e=>{ if(e.target===port) onDisconnect(); });
+    navigator.serial.addEventListener("disconnect", e=>{ if(active && e.target===active.port){ active.isOpen=false; onDisconnect(); } });
+    navigator.serial.addEventListener("connect", ()=>{ if(!userDisconnected) setTimeout(autoDetect, 1500); });
+    // keep looking in the background while nothing is connected (e.g. earbuds still in the case)
+    setInterval(()=>{ if(!active && !userDisconnected && document.visibilityState==="visible") autoDetect(); }, 20000);
+    document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && !active && !userDisconnected) autoDetect(); });
+    autoDetect();
   } else {
     notice("This browser can't open Bluetooth serial connections. Open this page in <b>Chrome or Edge (version 117 or newer)</b> on Windows.", true);
   }

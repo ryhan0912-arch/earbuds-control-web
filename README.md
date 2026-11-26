@@ -6,6 +6,8 @@ A single-page web app for controlling **soundcore R50i NC / P30i (model A3959)**
 
 ## Features
 
+- Detects which soundcore device is on and connects to it automatically; shows a picker when several are on, and reconnects when the earbuds come back out of the case
+
 - Battery level and charging status for each earbud
 - Sound mode: noise cancelling (adaptive, manual 1–5, scene), transparency, normal; wind noise reduction
 - Equalizer: 22 presets and a custom 8-band EQ
@@ -23,8 +25,8 @@ A single-page web app for controlling **soundcore R50i NC / P30i (model A3959)**
 ## How to use
 
 1. Take the earbuds out of the case and make sure they're connected in your OS Bluetooth settings.
-2. Open the page and click **Connect**.
-3. Pick the entry named **JL_SPP** or the earbuds' name.
+2. First time only: open the page, click **Add device** and pick the entry named **JL_SPP** or the earbuds' name.
+3. From then on, just open the page — it finds and connects to your device by itself.
 
 ## Credits and license
 
