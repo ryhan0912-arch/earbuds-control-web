@@ -2,8 +2,17 @@
 
 A single-page web app for controlling soundcore earbuds from a desktop browser, with no app install.
 
-**Full controls:** soundcore R50i NC / P30i (A3959), soundcore R60i NC / P31i (D1202C / D1202).
-**Detected with device info and battery:** about 30 more soundcore models.
+**Tested on a real device:** soundcore R50i NC / P30i (A3959).
+
+**Supported from the OpenSCQ30 protocol definitions (not yet tested in this app on real hardware):**
+R60i NC / P31i, Liberty 5, Liberty 4 Pro, Liberty 4, Liberty 4 NC, Liberty 3 Pro, Liberty Air 2 Pro, Liberty 2 Pro+,
+P40i, P20i / P25i / R50i, A20i, Life P2 Mini, Life Note 3, Life Note 3S, Life P3, Life Dot 2 NC, Life A2 NC, Life Dot 2S,
+Space A40, Sport X20, C30i, C50i, AeroClip, V20i, Sleep A30, Vortex, Space 2, Space One, Space One Pro, Space Q45,
+Life Q30, Life Q35, Life Tune, Life Tune Pro, Life 2 Neo, Q20i, Q11i.
+
+What each model gets depends on what the device supports: sound modes (noise cancelling, transparency),
+equalizer, touch controls, and toggles such as LDAC, gaming mode, wear detection, auto power off and dual connection.
+Liberty 2 Pro and Motion+ show battery and device info only.
 
 **Open it:** https://ryhan0912-arch.github.io/earbuds-control-web/ in Chrome or Edge on Windows, macOS, Linux or ChromeOS.
 

@@ -33,16 +33,17 @@ main{max-width:980px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-templ
 button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:8px 14px;cursor:pointer}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 button:disabled{opacity:.5;cursor:not-allowed}
-.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex-wrap:wrap;margin-top:12px}
+.seg:first-child{margin-top:0}
 .seg button{border:0;border-radius:0;flex:1;padding:9px 8px;min-width:90px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
-.row:first-of-type{border-top:0}
-.row label{flex:1}
+.row:first-child{border-top:0}
+.row > label:first-child{flex:1}
 .sub{color:var(--muted);font-size:13px}
 select,input[type=number]{font:inherit;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
-input[type=range]{accent-color:var(--accent);width:100%}
-.row label.switch,.switch{position:relative;width:44px;height:26px;flex:0 0 44px;display:inline-block}
+input[type=range]{accent-color:var(--accent);width:100%;max-width:180px}
+.switch{position:relative;width:44px;height:26px;flex:0 0 44px;display:inline-block}
 .switch input{opacity:0;width:0;height:0}
 .switch span{position:absolute;inset:0;background:var(--line);border-radius:26px;transition:.15s}
 .switch span:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
@@ -58,7 +59,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .dot.on{background:var(--good)}
 .eq{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;align-items:end;margin-top:10px}
 .eq div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
-.eq input[type=range]{writing-mode:vertical-lr;direction:rtl;height:150px;width:28px}
+.eq input[type=range]{writing-mode:vertical-lr;direction:rtl;height:150px;width:28px;max-width:none}
 .eq output{color:var(--text);font-variant-numeric:tabular-nums}
 .btns{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 12px;align-items:center}
 .btns .h{font-size:12.5px;color:var(--muted)}
@@ -72,7 +73,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chips label{display:inline-flex;gap:6px;align-items:center;background:var(--soft);padding:6px 10px;border-radius:20px}
 ul.devs{list-style:none;margin:0;padding:0}
-ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
 @media (max-width:560px){.eq input[type=range]{height:120px;width:22px}.eq{gap:2px}}
 </style>
 </head>
@@ -91,65 +92,29 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
   <div class="card wide" id="introCard">
     <div class="notice" id="notice">
       Looking for your soundcore devices… Open this page in <b>Chrome or Edge</b> on a computer
-      with the earbuds paired and connected.
+      with your earbuds or headphones paired and connected.
     </div>
   </div>
 
   <section class="card" id="battCard">
     <h2>Battery</h2>
-    <div class="batt">
+    <div class="batt" id="battDual">
       <div class="bud"><span class="sub">Left</span><b id="battL">–</b><div class="meter"><i id="mL"></i></div><span class="sub" id="chgL"></span></div>
       <div class="bud"><span class="sub">Right</span><b id="battR">–</b><div class="meter"><i id="mR"></i></div><span class="sub" id="chgR"></span></div>
+    </div>
+    <div class="batt" id="battSingle" style="grid-template-columns:1fr" hidden>
+      <div class="bud"><span class="sub">Battery</span><b id="battS">–</b><div class="meter"><i id="mS"></i></div><span class="sub" id="chgS"></span></div>
     </div>
     <p class="sub" id="caseText" style="margin:10px 0 0"></p>
     <p class="sub" id="twsText" style="margin:6px 0 0"></p>
   </section>
 
-  <section class="card ctl" id="soundCard">
+  <section class="card ctl" id="soundCard" hidden>
     <h2>Sound mode</h2>
-    <div class="seg" id="ambientSeg">
-      <button data-v="0">Noise cancelling</button>
-      <button data-v="1">Transparency</button>
-      <button data-v="2">Normal</button>
-    </div>
-    <div id="ncBox" style="margin-top:14px">
-      <div class="seg" id="ncModeSeg">
-        <button data-v="1">Adaptive</button>
-        <button data-v="0">Manual</button>
-        <button data-v="2">Scene</button>
-      </div>
-      <div id="manualBox" class="row" style="border:0">
-        <label>Strength <span class="sub" id="manualVal"></span></label>
-        <input type="range" id="manual" min="1" max="5" step="1" style="max-width:180px">
-      </div>
-      <div id="adaptiveBox">
-        <div class="row" style="border:0"><label>Current adaptive level</label><span id="adaptiveVal">–</span></div>
-        <div class="row" id="sensRow"><label>Adaptive sensitivity <span class="sub" id="sensVal"></span></label>
-          <input type="range" id="sens" min="0" max="10" step="1" style="max-width:180px"></div>
-        <div class="row" id="rtRow"><label>Real-time adaptive noise cancelling</label>
-          <label class="switch"><input type="checkbox" id="realtime"><span></span></label></div>
-      </div>
-      <div id="sceneBox" style="margin-top:10px">
-        <div class="seg" id="sceneSeg">
-          <button data-v="0">Transport</button>
-          <button data-v="1">Outdoor</button>
-          <button data-v="2">Indoor</button>
-        </div>
-      </div>
-    </div>
-    <div id="trBox" style="margin-top:14px">
-      <div class="seg" id="trSeg">
-        <button data-v="0">Full transparency</button>
-        <button data-v="1">Vocal mode</button>
-      </div>
-    </div>
-    <div class="row" id="windRow" style="margin-top:8px">
-      <label>Wind noise reduction <div class="sub" id="windDet"></div></label>
-      <label class="switch"><input type="checkbox" id="wind"><span></span></label>
-    </div>
+    <div id="soundBody"></div>
   </section>
 
-  <section class="card wide ctl" id="eqCard">
+  <section class="card wide ctl" id="eqCard" hidden>
     <h2>Equalizer</h2>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <select id="preset"></select>
@@ -159,15 +124,13 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
     <div class="eq" id="eqBands"></div>
   </section>
 
-  <section class="card wide ctl" id="btnCard">
+  <section class="card wide ctl" id="btnCard" hidden>
     <h2>Touch controls</h2>
-    <div class="btns" id="btnGrid">
-      <span></span><span class="h">Left earbud</span><span class="h">Right earbud</span>
-    </div>
+    <div class="btns" id="btnGrid"></div>
     <div style="margin-top:12px"><button id="btnReset">Reset controls to default</button></div>
   </section>
 
-  <section class="card ctl" id="cycleCard" data-feat="cycle">
+  <section class="card ctl" id="cycleCard" hidden>
     <h2>Mode switch cycle</h2>
     <p class="sub" style="margin-top:0">Modes the "Sound mode" touch action cycles through.</p>
     <div class="chips">
@@ -177,25 +140,12 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
     </div>
   </section>
 
-  <section class="card ctl" id="miscCard">
+  <section class="card ctl" id="miscCard" hidden>
     <h2>General</h2>
-    <div class="row" data-feat="spatial"><label>Spatial audio</label><label class="switch"><input type="checkbox" id="spatial"><span></span></label></div>
-    <div class="row" data-feat="spatial"><label>Spatial audio mode</label>
-      <select id="spatialMode"><option value="0">Music</option><option value="2">Movie</option><option value="3">Gaming</option></select></div>
-    <div class="row" data-feat="ldac"><label>LDAC (high-resolution audio)<div class="sub">Uses more battery; needs an LDAC-capable phone</div></label><label class="switch"><input type="checkbox" id="ldac"><span></span></label></div>
-    <div class="row" data-feat="gaming"><label>Gaming mode (low latency)<div class="sub" id="gameNote"></div></label><label class="switch"><input type="checkbox" id="gaming"><span></span></label></div>
-    <div class="row" data-feat="surround"><label>3D surround sound</label><label class="switch"><input type="checkbox" id="surround"><span></span></label></div>
-    <div class="row" data-feat="touchTone"><label>Touch tone</label><label class="switch"><input type="checkbox" id="touchTone"><span></span></label></div>
-    <div class="row" data-feat="lowBatt"><label>Low battery voice prompt</label><label class="switch"><input type="checkbox" id="lowBatt"><span></span></label></div>
-    <div class="row" data-feat="lhv"><label>Limit high volume</label><label class="switch"><input type="checkbox" id="lhvOn"><span></span></label></div>
-    <div class="row" data-feat="lhv"><label>Volume limit</label>
-      <select id="lhvDb"><option>75</option><option>80</option><option>85</option><option>90</option><option>95</option><option>100</option></select></div>
-    <div class="row" data-feat="apo"><label>Auto power off</label><label class="switch"><input type="checkbox" id="apoOn"><span></span></label></div>
-    <div class="row" data-feat="apo"><label>Power off after</label>
-      <select id="apoDur"><option value="0">10 minutes</option><option value="1">20 minutes</option><option value="2">30 minutes</option><option value="3">60 minutes</option></select></div>
+    <div id="miscBody"></div>
   </section>
 
-  <section class="card ctl" id="dualCard" data-feat="dual">
+  <section class="card ctl" id="dualCard" hidden>
     <h2>Dual connection</h2>
     <div class="row"><label>Connect to two devices at once</label><label class="switch"><input type="checkbox" id="dual"><span></span></label></div>
     <ul class="devs" id="devList"></ul>
@@ -207,9 +157,9 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
     <dl class="kv">
       <dt>Model</dt><dd id="iModel">–</dd>
       <dt>Serial</dt><dd id="iSerial">–</dd>
-      <dt>Firmware L</dt><dd id="iFwL">–</dd>
-      <dt>Firmware R</dt><dd id="iFwR">–</dd>
+      <dt>Firmware</dt><dd id="iFw">–</dd>
     </dl>
+    <p class="sub" id="supportNote" style="margin:10px 0 0"></p>
     <button id="refreshBtn" style="margin-top:12px">Refresh all</button>
   </section>
 
@@ -225,8 +175,10 @@ ul.devs li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-c
 
 <script>
 "use strict";
-/* ---------- constants ---------- */
-// Every soundcore model exposes a vendor RFCOMM service 0cf12d31-fac3-4553-bd80-d6832e7XXXXX,
+/* =====================================================================
+   Device identification
+   ===================================================================== */
+// Every newer soundcore model exposes a vendor RFCOMM service 0cf12d31-fac3-4553-bd80-d6832e7XXXXX,
 // where the last 5 hex digits identify the model. Older models use the standard serial port service.
 const VENDOR_PREFIX = "0cf12d31-fac3-4553-bd80-d6832e7";
 const SPP_UUID = "00001101-0000-1000-8000-00805f9b34fb";
@@ -244,19 +196,43 @@ const MODELS = {
   d1402:["D1402","soundcore Space 2"]
 };
 const MODEL_BY_CODE = Object.fromEntries(Object.values(MODELS));
-Object.assign(MODEL_BY_CODE, { A3004:"soundcore Q20i", A3028:"soundcore Life Q30", A3909:"soundcore Liberty 2 Pro",
-  A3930:"soundcore Liberty 2 Pro+", A3931:"soundcore Life Dot 2 NC", A3951:"soundcore Liberty Air 2 Pro" });
+Object.assign(MODEL_BY_CODE, {
+  A3004:"soundcore Q20i", A3027:"soundcore Life Q35", A3028:"soundcore Life Q30", A3029:"soundcore Life Tune",
+  A3030:"soundcore Life Tune Pro", A3031:"soundcore Vortex", A3033:"soundcore Life 2 Neo", A3909:"soundcore Liberty 2 Pro",
+  A3926:"soundcore Life Dot 2S", A3930:"soundcore Liberty 2 Pro+", A3931:"soundcore Life Dot 2 NC",
+  A3935:"soundcore Life A2 NC", A3951:"soundcore Liberty Air 2 Pro"
+});
 const ALL_UUIDS = [...Object.keys(MODELS).map(s => VENDOR_PREFIX + s), SPP_UUID];
-// model code -> profile with full controls (see PROFILES below)
-const PROFILE_OF = { A3959:"A3959", D1202:"D1202", D1202C:"D1202" };
-const SUPPORTED = new Set(Object.keys(PROFILE_OF));
+
+/* =====================================================================
+   Protocol constants
+   ===================================================================== */
 const CMD = {
   STATE:[0x01,0x01], TWS:[0x01,0x02], BATT:[0x01,0x03], CHG:[0x01,0x04], SERIAL:[0x01,0x05],
-  GAMING_UPD:[0x01,0x11], SOUND_UPD:[0x06,0x01], SET_SOUND:[0x06,0x81], SET_CYCLE:[0x06,0x82],
-  SET_EQ_DRC:[0x02,0x83], SET_SURROUND:[0x02,0x86], SET_TOUCH_TONE:[0x01,0x83], SET_GAMING:[0x01,0x87],
-  SET_APO:[0x01,0x86], SET_LOWBATT:[0x10,0x82], SET_BUTTON:[0x04,0x81], RESET_BUTTONS:[0x04,0x82],
-  DUAL_LIST:[0x0b,0x01], SET_DUAL:[0x0b,0x84],
-  SET_EQ_HEARID:[0x03,0x87], SET_SPATIAL:[0x10,0x81], SET_LDAC:[0x01,0xff], LDAC_UPD:[0x01,0x7f], SET_LHV:[0x20,0x82]
+  GAMING_UPD:[0x01,0x11], LDAC_UPD:[0x01,0x7f], SOUND_UPD:[0x06,0x01], SET_SOUND:[0x06,0x81], SET_CYCLE:[0x06,0x82],
+  SET_BUTTON:[0x04,0x81], RESET_BUTTONS:[0x04,0x82], SET_BUTTON_EN:[0x04,0x83],
+  SET_APO:[0x01,0x86], SET_LHV:[0x20,0x82], SET_SPATIAL:[0x10,0x81],
+  DUAL_LIST:[0x0b,0x01], SET_DUAL:[0x0b,0x84]
+};
+// on/off settings: state key -> label, set command, inverted?
+const FLAGS = {
+  gaming:     ["Gaming mode (low latency)", [0x01,0x87]],
+  surround:   ["3D surround sound", [0x02,0x86]],
+  ldac:       ["LDAC (high-resolution audio)", [0x01,0xff]],
+  soundLeak:  ["Sound leak compensation", [0x10,0x86]],
+  touchTone:  ["Touch tone", [0x01,0x83]],
+  wearDetect: ["Wear detection (auto pause)", [0x01,0x81]],
+  autoPlay:   ["Auto play / pause", [0x01,0x81]],
+  wearTone:   ["Wearing tone", [0x01,0x8c]],
+  touchLock:  ["Touch lock", [0x04,0x86]],
+  lowBatt:    ["Low battery voice prompt", [0x10,0x82]],
+  voicePrompt:["Voice prompts", [0x01,0x90]],
+  buttonsOn:  ["Touch controls enabled", [0x10,0x94], true]
+};
+const APO_LISTS = {
+  "10": ["10 minutes","20 minutes","30 minutes","60 minutes"],
+  "30": ["30 minutes","60 minutes","90 minutes","120 minutes"],
+  "300":["30 minutes","60 minutes","3 hours","5 hours"]
 };
 const PRESETS = [
   ["Soundcore Signature",0,[0,0,0,0,0,0,0,0]], ["Acoustic",1,[40,10,20,20,40,40,40,20]],
@@ -273,24 +249,252 @@ const PRESETS = [
 ];
 const CUSTOM_ID = 0xfefe;
 const BAND_HZ = ["100","200","400","800","1.6k","3.2k","6.4k","12.8k"];
-const ACTIONS = [[0,"Volume up"],[1,"Volume down"],[2,"Previous track"],[3,"Next track"],[4,"Sound mode"],[5,"Voice assistant"],[6,"Play / pause"],[15,"Disabled"]];
-// state order: LS, RS, LD, RD, LT, RT, LL, RL ; button ids: single=2 double=0 triple=5 long=1
-const PRESS = [["Single tap",2],["Double tap",0],["Triple tap",5],["Long press",1]];
-const MINIMAL_ACTIONS = new Set([0,1,2,3,6,15]);
-// Per-model profiles: state layout parser, sound-mode format, EQ format and which settings exist.
-const PROFILES = {
-  A3959: { minLen:69, parse:parseA3959, sound:"a3959", eq:"drc", customTail:[0,0], singleMinimal:false,
-           feats:["cycle","gaming","surround","touchTone","lowBatt","apo","dual"] },
-  D1202: { minLen:139, parse:parseD1202, sound:"d1202", eq:"hearid", customTail:[0,-120], singleMinimal:true,
-           feats:["touchTone","lowBatt","apo","dual","ldac","lhv","spatial"] }
-};
-const prof = () => PROFILES[PROFILE_OF[S.modelCode]];
-const has = f => !!prof()?.feats.includes(f);
 
-/* ---------- state ---------- */
-let active=null, connected=false;           // the Conn currently being controlled
+/* ---------- touch control actions ---------- */
+const ACT_NAMES = {0:"Volume up",1:"Volume down",2:"Previous track",3:"Next track",4:"Sound mode",5:"Voice assistant",6:"Play / pause",9:"Gaming mode",15:"Disabled"};
+const A_MIN=[0,1,2,3,6], A_NOSM=[0,1,2,3,5,6], A_STD=[0,1,2,3,4,5,6], A_GAME=[0,1,2,3,4,5,6,9];
+const PRESS_NAMES = {single:"Single tap",double:"Double tap",triple:"Triple tap",long:"Long press",slideUp:"Slide up",slideDown:"Slide down"};
+const PRESS_ID = {single:2,double:0,triple:5,long:1,slideUp:6,slideDown:7};
+// btn(press, enabledKind, actionKind, actions, disablable)
+const btn = (press,en,act,acts,dis=true) => ({press,id:PRESS_ID[press],en,act,acts,dis});
+const order = s => s.split(",").map(x=>[x[0], {S:"single",D:"double",T:"triple",H:"long",U:"slideUp",W:"slideDown"}[x[1]]]);
+const STD8 = order("LS,RS,LD,RD,LT,RT,LH,RH");
+const STD6 = order("LS,RS,LD,RD,LH,RH");
+
+/* =====================================================================
+   Sound mode formats
+   Each format lists controls; every control reads/writes bytes of the raw block.
+   ===================================================================== */
+const AMB3 = [[0,"Noise cancelling"],[1,"Transparency"],[2,"Normal"]];
+const TRANS2 = [[0,"Full transparency"],[1,"Vocal mode"]];
+const SCENE3 = [[0,"Transport"],[1,"Outdoor"],[2,"Indoor"]];
+const hi = i => ({get:b=>b[i]>>4, set:(b,v)=>{b[i]=(b[i]&0x0f)|(v<<4);}});
+const lo = i => ({get:b=>b[i]&0x0f, set:(b,v)=>{b[i]=(b[i]&0xf0)|(v&0x0f);}});
+const by = i => ({get:b=>b[i], set:(b,v)=>{b[i]=v;}});
+const bit0 = i => ({get:b=>b[i]&1, set:(b,v)=>{b[i]=(b[i]&~1)|(v?1:0);}});
+const AMB = (opts=AMB3, mirror) => ({key:"ambient", type:"seg", ...by(0), opts, mirror});
+const NC = (i, show) => b => b[0]===0 && (show===undefined || show(b));
+const SOUND = {
+  common4: { len:4, ctl:[
+    AMB(),
+    {label:"Noise cancelling type", type:"seg", ...by(1), opts:[[0,"Transport"],[1,"Outdoor"],[2,"Indoor"],[3,"Custom"]], show:NC()},
+    {label:"Custom level", type:"range", ...by(3), min:0, max:10, show:b=>b[0]===0&&b[1]===3},
+    {type:"seg", ...by(2), opts:TRANS2, show:b=>b[0]===1} ]},
+  a3959: { len:7, ctl:[
+    AMB(AMB3, 2),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Manual"],[2,"Scene"]], show:NC()},
+    {label:"Strength", type:"range", ...hi(1), min:1, max:5, show:b=>b[0]===0&&b[3]===0},
+    {label:"Current adaptive level", type:"info", ...lo(1), fmt:v=>v+" / 5", show:b=>b[0]===0&&b[3]===1},
+    {label:"Adaptive sensitivity", type:"range", ...by(5), min:0, max:10, show:b=>b[0]===0&&b[3]===1},
+    {type:"seg", ...by(6), opts:SCENE3, show:b=>b[0]===0&&b[3]===2},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2, detect:4} ]},
+  d1202: { len:8, ctl:[
+    AMB(),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Manual"],[2,"Scene"]], show:NC()},
+    {label:"Strength", type:"range", ...hi(1), min:1, max:5, show:b=>b[0]===0&&b[3]===0},
+    {label:"Current adaptive level", type:"info", ...lo(1), fmt:v=>["Weak","Moderate","Strong"][v]||"–", show:b=>b[0]===0&&b[3]===1},
+    {label:"Real-time adaptive noise cancelling", type:"toggle", ...by(7), show:b=>b[0]===0&&b[3]===1},
+    {type:"seg", ...by(6), opts:SCENE3, show:b=>b[0]===0&&b[3]===2},
+    {type:"seg", ...by(2), opts:TRANS2, show:b=>b[0]===1},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2, detect:4} ]},
+  a3936: { len:6, ctl:[
+    AMB(),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Manual"]], show:NC()},
+    {label:"Strength", type:"select", ...hi(1), opts:[[1,"Weak"],[2,"Moderate"],[3,"Strong"]], show:b=>b[0]===0&&b[3]===0},
+    {label:"Detected noise level", type:"info", ...lo(1), fmt:v=>["Low","Medium","High"][v]||"–", show:b=>b[0]===0&&b[3]===1},
+    {label:"Adaptive sensitivity", type:"range", ...by(5), min:0, max:10, show:b=>b[0]===0&&b[3]===1},
+    {type:"seg", ...by(2), opts:TRANS2, show:b=>b[0]===1},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2, detect:4} ]},
+  a3952: { len:6, ctl:[
+    AMB(),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Manual"]], show:NC()},
+    {label:"Strength", type:"select", ...hi(1), opts:[[1,"Weak"],[2,"Moderate"],[3,"Strong"]], show:b=>b[0]===0&&b[3]===0},
+    {label:"Detected noise level", type:"info", ...lo(1), fmt:v=>["Low","Medium","High"][v]||"–", show:b=>b[0]===0&&b[3]===1},
+    {type:"seg", ...by(2), opts:TRANS2, show:b=>b[0]===1},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2, detect:4} ]},
+  a3957: { len:7, ctl:[
+    AMB(),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Manual"],[2,"Transport"]], show:NC()},
+    {label:"Strength", type:"range", ...hi(1), min:1, max:5, show:b=>b[0]===0&&b[3]===0},
+    {label:"Current adaptive level", type:"info", ...lo(1), fmt:v=>["Weak","Moderate","Strong"][v]||"–", show:b=>b[0]===0&&b[3]===1},
+    {label:"Adaptive sensitivity", type:"range", ...by(5), min:0, max:10, show:b=>b[0]===0&&b[3]===1},
+    {type:"seg", ...by(6), opts:[[0,"Plane"],[3,"Car"]], show:b=>b[0]===0&&b[3]===2},
+    {type:"seg", ...by(2), opts:TRANS2, show:b=>b[0]===1},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2, detect:4} ]},
+  a3955: { len:7, ctl:[
+    AMB(),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Manual"],[2,"Scene"]], show:NC()},
+    {label:"Strength", type:"range", ...hi(1), min:1, max:5, show:b=>b[0]===0&&b[3]===0},
+    {label:"Current adaptive level", type:"info", ...lo(1), fmt:v=>({1:"Weak",2:"Moderate",3:"Strong"})[v]||"–", show:b=>b[0]===0&&b[3]===1},
+    {label:"Adaptive sensitivity", type:"range", ...by(5), min:0, max:10, show:b=>b[0]===0&&b[3]===1},
+    {type:"seg", ...by(6), opts:SCENE3, show:b=>b[0]===0&&b[3]===2},
+    {type:"seg", ...by(2), opts:TRANS2, show:b=>b[0]===1},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2, detect:4} ]},
+  a3947: { len:7, ctl:[
+    AMB(),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Manual"],[2,"Transport"]], show:NC()},
+    {label:"Strength", type:"range", ...hi(1), min:1, max:5, show:b=>b[0]===0&&b[3]===0},
+    {label:"Current adaptive level", type:"info", ...lo(1), fmt:v=>v+" / 5", show:b=>b[0]===0&&b[3]===1},
+    {label:"Environment detection", type:"toggle", ...by(5), show:b=>b[0]===0&&b[3]===1},
+    {type:"seg", ...by(6), opts:[[0,"Plane"],[1,"Train"],[2,"Bus"],[3,"Car"]], show:b=>b[0]===0&&b[3]===2},
+    {type:"seg", ...by(2), opts:TRANS2, show:b=>b[0]===1},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2, detect:4} ]},
+  a3953: { len:6, ctl:[
+    AMB(),
+    {label:"Noise cancelling strength", type:"range", ...hi(1), min:1, max:6, show:NC()},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2} ]},
+  a3954: { len:4, ctl:[
+    AMB([[0,"Noise cancelling"],[1,"Transparency"],[2,"Normal"],[3,"Airplane"]]),
+    {label:"Wind noise reduction", type:"toggle", ...bit0(3), show:b=>b[0]!==2} ]},
+  a3035: { len:6, ctl:[
+    AMB(AMB3, 2),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Custom"]], show:NC()},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2} ]},
+  a3062: { len:6, ctl:[
+    AMB(),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Custom"]], show:NC()},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2} ]},
+  a3040: { len:6, ctl:[
+    AMB(),
+    {type:"seg", ...by(3), opts:[[1,"Adaptive"],[0,"Manual"]], show:NC()},
+    {type:"seg", ...by(2), opts:[[0,"Talk mode"],[1,"Manual"]], show:b=>b[0]===1},
+    {label:"Wind noise reduction", type:"toggle", ...bit0(4), show:b=>b[0]!==2} ]},
+  d1402: { len:6, ctl:[ AMB() ]}
+};
+
+/* =====================================================================
+   Model profiles
+   layout = how the state packet (01 01) is laid out, read in order.
+   eq     = how equalizer changes are sent.
+   ===================================================================== */
+const TWS_HDR = ["tws","dualBatt","dualFw","serial"];
+const P = {
+  A3959:{ name:"R50i NC / P30i", batt:[10,1], apo:"10", eq:"drc", minFw:{gaming:1.6},
+    layout:[...TWS_HDR, ["eq",1,10], ["skip",11], ["buttons",STD8], "cycle", ["sound","a3959"], ["skip",1],
+            "touchTone","dual","surround","apo","lowBatt","gaming"],
+    buttons:{single:btn("single","N","T",A_STD), double:btn("double","N","T",A_STD), triple:btn("triple","N","T",A_STD), long:btn("long","N","T",A_STD)} },
+  D1202:{ name:"R60i NC / P31i", batt:[10,1], caseBatt:[10,1], apo:"10", eq:"hearStd", customTail:[0,-120], spatial:true,
+    layout:[...TWS_HDR, ["skip",5], "caseBatt", ["eq",2,10], ["skip",1], ["hearEnd",2,10], ["skip",1], ["buttons",STD8], ["skip",1],
+            ["sound","d1202"], ["skip",1], "touchTone","lowBatt","ldac","dual","apo","lhv","spatialD1202"],
+    buttons:{single:btn("single","N","T",A_MIN), double:btn("double","N","T",A_STD), triple:btn("triple","N","T",A_STD), long:btn("long","N","T",A_STD)} },
+  A3957:{ name:"Liberty 5", batt:[10,1], caseBatt:[10,1], apo:"10", eq:"hearStd", customTail:[0,-120],
+    layout:[...TWS_HDR, ["skip",5], "caseBatt", ["eq",2,10], "age", ["hearEnd",2,10], ["skip",1], ["buttons",STD8], "cycle",
+            ["sound","a3957"], ["skip",1], "wearTone","lowBatt","ldac","dual","apo","lhv", ["skip",7], "soundLeak","wearDetect","touchTone"],
+    buttons:{single:btn("single","N","T",A_STD), double:btn("double","N","T",A_STD), triple:btn("triple","N","T",A_STD), long:btn("long","N","T",A_STD)} },
+  A3955:{ name:"P40i", batt:[5,0], caseBatt:[5,0], apo:"10", eq:"hearDrc", hearMid:"init",
+    layout:[...TWS_HDR, ["skip",5], "caseBatt", ["eq",2,10], "hearInit", ["hearEnd",2,10], ["skip",1], ["buttons",STD8], "cycle",
+            ["sound","a3955"], ["skip",8], "touchTone", ["skip",1], "lhv","apo", ["skip",1], "lowBatt"],
+    buttons:{single:btn("single","N","T",A_STD), double:btn("double","N","T",A_STD), triple:btn("triple","N","T",A_STD), long:btn("long","N","T",A_STD)} },
+  A3953:{ name:"Liberty 4", batt:[5,0], caseBatt:[5,0], apo:"10", eq:"hearDrc", hearMid:"init",
+    layout:[...TWS_HDR, ["eq",2,10], "hearInit", ["hearEnd",2,10], "customLen", ["buttons",order("LS,RS,LD,RD")], ["skip",4],
+            ["buttons",order("LT,RT")], "gap18", "cycle", ["sound","a3953"], ["skip",6], "wearDetect", ["skip",2], "caseBatt", ["skip",1],
+            "ldac","dual","apo", ["skip",1], "wearTone","lowBatt"],
+    buttons:{single:btn("single","T","T",A_STD), double:btn("double","T","T",A_STD), triple:btn("triple","T","T",A_STD)} },
+  A3954:{ name:"Liberty 4 Pro", batt:[100,0], caseBatt:[10,1], apo:"10", eq:"hearStd", customTail:[0,-120],
+    layout:[...TWS_HDR, ["skip",5], "caseBatt", ["skip",6], ["eq",2,10], ["skip",1], ["hearEnd",2,10], ["skip",1],
+            ["buttons",STD8], "cycle", ["sound","a3954"], ["skip",8], ["skip",3], "lowBatt","ldac","dual","apo","lhv",
+            ["skip",5], "soundLeak", ["skip",5], "wearDetect", ["skip",1], ["buttons",order("LU,RU,LW,RW")]],
+    buttons:{single:btn("single","N","T",A_STD), double:btn("double","N","T",A_STD), triple:btn("triple","N","T",A_STD), long:btn("long","N","T",A_STD),
+             slideUp:btn("slideUp","N","T",[0]), slideDown:btn("slideDown","N","T",[1])} },
+  A3947:{ name:"Liberty 4 NC", batt:[5,0], caseBatt:[5,0], apo:"10", eq:"hearA3947",
+    layout:[...TWS_HDR, ["skip",5], ["eq",2,10], ["skip",1], ["hear3947",2,10], ["skip",1], ["buttons",order("LS,RS,LD,RD,LH,RH,LT,RT")],
+            "cycle", ["sound","a3947"], ["skip",6], "caseBatt", ["skip",1], "soundLeak", ["skip",2], "touchTone", ["skip",3],
+            "surround","lhv","autoPlay","wearTone","apo","touchLock","lowBatt"],
+    buttons:{single:btn("single","T","T",A_STD), double:btn("double","T","T",A_STD), triple:btn("triple","T","T",A_STD), long:btn("long","T","T",A_STD)} },
+  A3952:{ name:"Liberty 3 Pro", batt:[5,0], caseBatt:[5,0], apo:"30", eq:"commonHear",
+    layout:[...TWS_HDR, ["eq",2,10], "age", ["hearEnd",2,10], ["skip",1], ["buttons",STD6], ["skip",4], "cycle", ["sound","a3952"],
+            "touchTone","wearDetect", ["skip",1], "caseBatt", ["skip",2], "ldac", ["skip",2], "wearTone", ["skip",1], "apo"],
+    buttons:{single:btn("single","T","T",A_STD), double:btn("double","T","T",A_STD), long:btn("long","T","T",A_STD)} },
+  A3968:{ name:"Sport X20", batt:[5,0], caseBatt:[5,0], apo:"10", eq:"commonHear",
+    layout:[...TWS_HDR, ["skip",5], "caseBatt", ["eq",2,10], ["skip",1], ["hearEnd",2,10], ["skip",1], ["buttons",STD6], "cycleTws",
+            ["sound","a3952"], ["skip",1], "surround", ["skip",1], "dual","touchTone","apo"],
+    buttons:{single:btn("single","N","T",A_MIN), double:btn("double","N","T",A_STD), long:btn("long","N","T",A_STD)} },
+  A3936:{ name:"Space A40", batt:[5,0], caseBatt:[10,0], apo:"30", eq:"commonHear", forceHear:true,
+    layout:[...TWS_HDR, ["eq",2,10], "age", ["hearEnd",2,10], ["skip",1], ["buttons",STD6], "cycle", ["sound","a3936"],
+            "touchTone","caseBatt", ["skip",1], "ldac","dual","apo","gaming"],
+    buttons:{single:btn("single","T","T",A_MIN,false), double:btn("double","T","T",A_GAME,false), long:btn("long","T","T",A_GAME,false)} },
+  A3933:{ name:"Life Note 3 / Life P3", batt:[5,0], caseBatt:[5,0], eq:"plain",
+    layout:[...TWS_HDR, ["eq",2,10], "age", ["hearIfAge",2,10], ["skip",6], "cycle", ["sound","common4"], ["skip",2],
+            "touchTone","wearDetect","gaming","caseBatt"] },
+  A3945:{ name:"Life Note 3S", batt:[5,0], caseBatt:[5,0], eq:"plain",
+    layout:[...TWS_HDR, ["eq",2,10], ["buttons",order("LD,LH,RD,RH,LS,RS")], "touchTone","wearDetect","gaming","caseBatt"],
+    buttons:{double:btn("double","S","T",A_NOSM,false), long:btn("long","S","T",A_NOSM,false), single:btn("single","S","S",A_NOSM)} },
+  A3944:{ name:"Life P2 Mini", batt:[5,0], eq:"drc",
+    layout:[...TWS_HDR, ["eq",1,10], ["skip",11], ["buttons",STD6], ["skip",5], "touchTone"],
+    buttons:{double:btn("double","S","T",A_NOSM), long:btn("long","S","T",A_NOSM), single:btn("single","S","S",A_NOSM)} },
+  A3948:{ name:"A20i", batt:[5,0], eq:"drc",
+    layout:[...TWS_HDR, ["eq",1,10], ["skip",11], ["buttons",STD6], ["skip",5], "touchTone"],
+    buttons:{single:btn("single","S","T",A_NOSM), double:btn("double","S","T",A_NOSM), long:btn("long","S","T",A_NOSM)} },
+  A3949:{ name:"P20i / P25i / R50i", batt:[5,0], eq:"drc",
+    layout:[...TWS_HDR, ["eq",1,10], ["skip",11], ["buttons",STD6], ["skip",4], "gaming","touchTone"],
+    buttons:{single:btn("single","S","T",A_NOSM), double:btn("double","S","T",A_NOSM), long:btn("long","S","T",A_NOSM)} },
+  A3931:{ name:"Life Dot 2 NC / Life A2 NC", batt:[5,0], apo:"30", eq:"drc",
+    layout:["tws","dualBatt", ["eq",2,8], ["buttons",order("LD,LH,RD,RH,LS,RS")], ["sound","common4"], ["skip",1], "touchTone","apo"],
+    buttons:{double:btn("double","S","T",A_STD,false), long:btn("long","S","T",A_STD,false), single:btn("single","S","S",A_STD,false)} },
+  A3031:{ name:"Vortex", batt:[5,0], apo:"30", eq:"plain",
+    layout:["tws","dualBatt", ["eq",2,8], ["skip",6], ["sound","common4"], ["skip",1], "touchTone","apo"] },
+  A3930:{ name:"Liberty 2 Pro+", batt:[5,0], eq:"commonHear",
+    layout:["tws","dualBatt", ["eq",2,8], "gender","age", ["hearMid",2,8], ["buttons",order("LD,LH,RD,RH,LS,RS")], ["sound","common4"]],
+    buttons:{double:btn("double","S","T",A_NOSM,false), long:btn("long","S","T",A_NOSM,false), single:btn("single","S","S",A_NOSM,false)} },
+  A3926:{ name:"Life Dot 2S", batt:[5,0], eq:"commonHear",
+    layout:["tws","dualBatt", ["eq",2,8], "gender","age", ["hearBasic",2,8]] },
+  A3951:{ name:"Liberty Air 2 Pro", batt:[5,0], eq:"commonHear",
+    layout:["tws","dualBatt", ["eq",2,8], "gender","age", ["hearMid",2,8], ["skip",6], ["sound","common4"], ["skip",1], "wearDetect","touchTone"] },
+  A3909:{ name:"Liberty 2 Pro", batt:[5,0], layout:["tws","dualBatt"] },
+  A3330:{ name:"C30i", dualLevel:true, batt:[5,0], caseBatt:[5,0], eq:"drc",
+    layout:["tws","dualBattLevel","dualFw","serial", ["skip",5], "caseBatt", ["skip",1], ["buttons",order("LD,RD,LT,RT,LH,RH")], ["skip",2],
+            "touchTone","lowBatt","dual","buttonsOn", ["skip",1], ["eq",1,10]],
+    buttons:{double:btn("double","N","T",A_NOSM), triple:btn("triple","N","T",A_NOSM), long:btn("long","N","T",A_NOSM)} },
+  A3388:{ name:"AeroClip", dualLevel:true, batt:[10,1], caseBatt:[10,1],
+    layout:["tws","dualBattLevel","dualFw","serial", ["skip",5], "caseBatt", ["skip",1], ["buttons",order("LD,RD,LT,RT")], ["skip",4],
+            "touchTone","lowBatt","dual","buttonsOn"],
+    buttons:{double:btn("double","N","T",A_NOSM), triple:btn("triple","N","T",A_NOSM)} },
+  A3876:{ name:"V20i", dualLevel:true, batt:[10,1], eq:"drc1",
+    layout:["tws","dualBattLevel","dualFw","serial", ["skip",6], ["eq",2,10], ["skip",1], ["buttons",STD8]],
+    buttons:{single:btn("single","N","T",A_MIN), double:btn("double","N","T",A_NOSM), triple:btn("triple","N","T",A_NOSM), long:btn("long","N","T",A_NOSM)} },
+  D1101:{ name:"C50i", dualLevel:true, batt:[10,1], apo:"30", eq:"plain",
+    layout:["tws","dualBattLevel","dualFw","serial", ["eq",1,10], ["skip",1], ["buttons",STD8], ["skip",1], "lowBatt","dual","buttonsOn","apo","ldac"],
+    buttons:{single:btn("single","N","T",A_NOSM), double:btn("double","N","T",[2,3,5,6]), triple:btn("triple","N","T",[2,3,5,6]), long:btn("long","N","T",[0,1,5])} },
+  D1301:{ name:"Sleep A30", dualLevel:true, batt:[10,1],
+    layout:["tws","dualBattLevel","dualFw","serial", ["skip",6], ["skip",5], ["skip",4], ["skip",1], ["buttons",order("LD,RD,LT,RT")]],
+    buttons:{double:btn("double","N","T",A_NOSM), triple:btn("triple","N","T",A_NOSM)} },
+  // over-ear headphones and others with a single battery
+  D1402:{ name:"Space 2", single:true, batt:[10,1], apo:"300", eq:"hearD1402",
+    layout:["singleBatt","fw","serial", ["eq",1,10], "eqUnk","age", ["hearEnd",1,10], ["skip",2], ["skip",1], ["skip",1], "cycle", ["skip",1],
+            ["sound","d1402"], ["skip",4], ["skip",1], "lowBatt", ["skip",1], "dual","apo","lhv", ["skip",3], "autoPlay"] },
+  A3062:{ name:"Space One Pro", single:true, batt:[10,1], apo:"30", eq:"hearA3062",
+    layout:["singleBatt","fw","serial", ["eq",1,10], ["skip",2], ["hearEnd",1,10], ["skip",2], ["skip",1], "cycle", ["sound","a3062"], ["skip",1],
+            "lowBatt", ["skip",1], "ldac","dual","apo","lhv"] },
+  A3035:{ name:"Space One", single:true, battLevelOnly:true, batt:[5,0], apo:"30", eq:"hearDrc", hearMid:"ff",
+    layout:["battLevel", ["skip",1], "fw","serial", ["eq",1,10], ["skip",2], ["hear3035",1,10], ["skip",3], ["skip",1], "cycle",
+            ["sound","a3035"], ["skip",1], "autoPlay", ["skip",4], "ldac","dual", ["skip",2], "apo","lhv"] },
+  A3040:{ name:"Space Q45", single:true, battLevelOnly:true, batt:[5,0], apo:"30", eq:"hearA3040",
+    layout:["battLevel", ["skip",1], "fw","serial", ["eq",1,10], ["skip",12], ["skip",1], "cycle", ["sound","a3040"], ["skip",6],
+            "ldac","dual", ["skip",2], "apo","lhv"] },
+  A3028:{ name:"Life Q30 / Life Tune", single:true, batt:[5,0], apo:"30", eq:"plain",
+    layout:["singleBatt", ["eq",1,8], "gender","age", ["hearBasic",2,8], ["sound","common4"], "fw","serial", ["skip",3], "apo"] },
+  A3027:{ name:"Life Q35 / Life Tune Pro", single:true, batt:[5,0], eq:"plain",
+    layout:["singleBatt", ["eq",1,8], "gender","age", ["hearBasic",2,8], ["sound","common4"], "fw","serial","wearDetect"] },
+  A3033:{ name:"Life 2 Neo", single:true, batt:[5,0], eq:"plain",
+    layout:["singleBatt", ["eq",1,8], "fw","serial","wearDetect"] },
+  A3004:{ name:"Q20i", single:true, batt:[5,0], eq:"drc",
+    layout:["singleBatt","fw","serial", ["eq",1,10], ["sound","common4"]] },
+  A3005:{ name:"Q11i", single:true, batt:[10,1], apo:"30", eq:"drc",
+    layout:["singleBatt","fw","serial", ["eq",1,10], ["skip",6], "dual", ["skip",4], "apo"] },
+  A3116:{ name:"Motion+", single:true, batt:[5,0], layout:["singleBattChgFirst", ["skip",3], "fw","serial"] }
+};
+const PROFILE_OF = { A3027:"A3027", A3030:"A3027", A3028:"A3028", A3029:"A3028", A3931:"A3931", A3935:"A3931",
+  A3933:"A3933", A3939:"A3933", D1202:"D1202", D1202C:"D1202" };
+for(const k of Object.keys(P)) if(!PROFILE_OF[k]) PROFILE_OF[k]=k;
+const SUPPORTED = new Set(Object.keys(PROFILE_OF));
+const prof = () => P[PROFILE_OF[S.modelCode]];
+
+/* =====================================================================
+   State
+   ===================================================================== */
+let active=null, connected=false;
 let detecting=false, userDisconnected=false, choosing=null;
-const S = {}; // device state
+const S = {};
 let dualPackets = [];
 
 /* ---------- helpers ---------- */
@@ -311,13 +515,17 @@ function buildPacket(cmd, body=[]){
 }
 async function send(cmd, body=[], note=""){
   if(!active) return;
-  const p = buildPacket(cmd, body);
+  const p = buildPacket(cmd, body.map(x=>x&0xff));
   log("→", p, note);
   await active.write(p);
 }
 const ascii = b => String.fromCharCode(...b).replace(/\0+$/,"");
+const is = (c, k) => c[0]===k[0] && c[1]===k[1];
+function fw(b){ const s=ascii(b); return /^\d\d\.\d\d$/.test(s) ? s : null; }
 
-/* ---------- one Bluetooth serial connection ---------- */
+/* =====================================================================
+   Bluetooth serial connection
+   ===================================================================== */
 class Conn{
   constructor(port){
     this.port=port; const info=port.getInfo?port.getInfo():{};
@@ -367,28 +575,26 @@ class Conn{
   }
 }
 
-/* ---------- device detection ---------- */
+/* ---------- detection ---------- */
 const isSoundcorePort = p => { const u=String((p.getInfo?p.getInfo():{}).bluetoothServiceClassId||"").toLowerCase(); return ALL_UUIDS.includes(u); };
 function identify(uuid, serial){
   let code=null;
-  // the vendor service ID names the exact model; the serial prefix is the fallback for older models
   if(uuid.startsWith(VENDOR_PREFIX)){ const m=MODELS[uuid.slice(VENDOR_PREFIX.length)]; if(m) code=m[0]; }
   if(!code && serial){ const c="A"+serial.slice(0,4); if(MODEL_BY_CODE[c]) code=c; }
   return { code, name: code ? MODEL_BY_CODE[code] : "Unknown soundcore device" };
 }
-// Open a port, ask it for its serial number, and work out which model it is.
 async function probe(conn){
   try{ await conn.open(8000); }catch{ return null; }
   const serial = await new Promise(resolve=>{
     const t=setTimeout(()=>resolve(null), 3000);
     conn.onPacket=(cmd,body)=>{
-      if(is(cmd,CMD.SERIAL) && body.length>=26){ clearTimeout(t); resolve(ascii(body.slice(10,26))); }
-      else if(is(cmd,CMD.STATE) && body.length>=32){ clearTimeout(t); resolve(ascii(body.slice(16,32))); }
+      if(is(cmd,CMD.SERIAL) && body.length>=26){ clearTimeout(t); resolve(ascii(body.slice(body.length-16))); }
+      else if(is(cmd,CMD.SERIAL) && body.length>=21){ clearTimeout(t); resolve(ascii(body.slice(5,21))); }
     };
     conn.write(buildPacket(CMD.SERIAL)).catch(()=>{});
   });
   conn.onPacket=null;
-  if(!serial && !conn.uuid.startsWith(VENDOR_PREFIX)){ await conn.close(); return null; } // generic serial port that didn't answer
+  if(!serial && !conn.uuid.startsWith(VENDOR_PREFIX)){ await conn.close(); return null; }
   return { conn, serial, ...identify(conn.uuid, serial) };
 }
 function setStatus(text){ $("connText").textContent=text; }
@@ -400,7 +606,7 @@ async function autoDetect(){
     if(!ports.length){ showFirstTime(); return; }
     const found=(await Promise.all(ports.map(p=>probe(new Conn(p))))).filter(Boolean);
     if(!found.length){
-      notice(`No soundcore device is turned on right now. Take your earbuds out of the case; this page connects as soon as they're on.
+      notice(`No soundcore device is turned on right now. Take your earbuds out of the case (or switch your headphones on); this page connects as soon as they're on.
         <div style="margin-top:10px"><button id="addDevBtn2">Add another device</button></div>`);
       $("addDevBtn2").onclick=addDevice;
       return;
@@ -428,9 +634,9 @@ function showChooser(found){
     left.innerHTML=`<b></b><br><span class="sub"></span>`;
     left.querySelector("b").textContent=r.name;
     left.querySelector(".sub").textContent=(r.code||"")+(r.serial?" · serial …"+r.serial.slice(-6):"")+(r.serial&&r.serial===last?" · last used":"");
-    const btn=document.createElement("button"); btn.className="primary"; btn.textContent="Connect";
-    btn.onclick=async()=>{ const others=found.filter(x=>x!==r); choosing=null; await Promise.all(others.map(x=>x.conn.close())); await startSession(r); };
-    li.append(left,btn); ul.appendChild(li);
+    const b=document.createElement("button"); b.className="primary"; b.textContent="Connect";
+    b.onclick=async()=>{ const others=found.filter(x=>x!==r); choosing=null; await Promise.all(others.map(x=>x.conn.close())); await startSession(r); };
+    li.append(left,b); ul.appendChild(li);
   }
   setStatus("Choose a device");
 }
@@ -443,12 +649,12 @@ async function addDevice(){
       filters: ALL_UUIDS.map(u=>({ bluetoothServiceClassId:u })),
       allowedBluetoothServiceClassIds: ALL_UUIDS
     });
-  }catch{ return; } // picker closed
+  }catch{ return; }
   if(choosing){ const hit=choosing.find(r=>r.conn.port===port); if(hit){ $("chooseList")?.querySelectorAll("button")[choosing.indexOf(hit)]?.click(); return; } }
   if(active){ if(active.port===port) return; userDisconnected=true; await active.close(); onDisconnect(); userDisconnected=false; }
   setStatus("Connecting…");
   const r=await probe(new Conn(port));
-  if(!r){ notice("Couldn't reach that device. Make sure it's out of the case, paired and connected to this PC, then try again.", true); setConnUI(); return; }
+  if(!r){ notice("Couldn't reach that device. Make sure it's on, paired and connected to this PC, then try again.", true); setConnUI(); return; }
   await startSession(r);
 }
 async function startSession(r){
@@ -459,14 +665,12 @@ async function startSession(r){
   S.modelCode=r.code; S.modelName=r.name; S.serial=r.serial||undefined;
   try{ if(r.serial) localStorage.setItem("lastSerial", r.serial); }catch{}
   $("introCard").hidden=true;
-  applyProfileUI(); setConnUI(); render();
-  if(SUPPORTED.has(r.code)) await requestAll();
-  else {
-    notice(`Connected to <b></b>. Full controls are only available for the soundcore R50i NC / P30i so far,
-      so this page shows the device info and battery for this model.`);
+  buildDeviceUI(); setConnUI(); render();
+  if(!prof()){
+    notice(`Connected to <b></b>. This model isn't supported for settings yet, so this page shows its device info and battery.`);
     $("notice").querySelector("b").textContent=r.name;
-    await send(CMD.BATT,[],"request battery"); await send(CMD.CHG,[],"request charging"); await send(CMD.SERIAL,[],"request serial/firmware");
   }
+  await requestAll();
 }
 async function disconnect(){
   userDisconnected=true;
@@ -488,196 +692,208 @@ function setConnUI(){
   if(!detecting && !choosing) setStatus(connected ? "Connected" : "Disconnected");
   $("connectBtn").textContent = connected ? "Disconnect" : "Connect";
   $("addDevBtn").hidden = connected;
-  const unsupported = connected && S.modelCode !== undefined && !SUPPORTED.has(S.modelCode);
-  document.querySelectorAll(".ctl").forEach(c=>{
-    c.hidden = unsupported || (!!c.dataset.feat && connected && !has(c.dataset.feat));
-    c.classList.toggle("disabled-ui", !connected || !S.loaded);
-  });
+  document.querySelectorAll(".ctl").forEach(c=>c.classList.toggle("disabled-ui", !connected || !S.loaded));
   if(!connected){ $("devName").textContent="Not connected"; }
 }
 async function requestAll(){
-  if(SUPPORTED.has(S.modelCode)) await send(CMD.STATE, [], "request state");
+  if(prof()?.layout) await send(CMD.STATE, [], "request state");
   setTimeout(()=>send(CMD.SERIAL, [], "request serial/firmware"), 300);
+  if(!prof()?.layout){ await send(CMD.BATT,[],"request battery"); await send(CMD.CHG,[],"request charging"); }
 }
-const is = (c, k) => c[0]===k[0] && c[1]===k[1];
+
+/* =====================================================================
+   State packet parsing (layout interpreter)
+   ===================================================================== */
+function hearFrom(b,o,C,B,kind){
+  // returns [hearObject, newOffset]
+  const n=C*B, h={};
+  h.enabled=b[o]===1; o+=1;
+  h.vol=Array.from(b.slice(o,o+n)); o+=n;
+  if(kind==="basic"){ h.time=Array.from(b.slice(o,o+4)); o+=4; h.type=0; h.custom=null; h.genre=[0,0]; return [h,o]; }
+  if(kind==="3035"){ h.time=Array.from(b.slice(o,o+4)); o+=4; h.type=b[o]; o+=1; h.custom=Array.from(b.slice(o,o+n)); o+=n; h.genre=[b[o],0]; o+=1; return [h,o]; }
+  h.time=Array.from(b.slice(o,o+4)); o+=4;
+  h.type=b[o]; o+=1;
+  if(kind==="mid"){ h.genre=[b[o],0]; o+=1; h.custom=Array.from(b.slice(o,o+n)); o+=n; return [h,o]; }
+  h.custom=Array.from(b.slice(o,o+n)); o+=n;
+  if(kind==="3947"){ h.genre=[b[o],0]; o+=2; return [h,o]; }
+  h.genre=[b[o],b[o+1]]; o+=2; return [h,o];
+}
+function parseLayout(b, layout){
+  let o=0, customLen=0, btnIdx=0;
+  S.btnState={};
+  for(const tok of layout){
+    if(o>=b.length) break;
+    const [t,a1,a2]=Array.isArray(tok)?tok:[tok];
+    switch(t){
+      case "tws": S.host=b[o]; S.twsConnected=b[o+1]===1; o+=2; break;
+      case "dualBatt": S.battL=b[o]; S.battR=b[o+1]; S.chgL=b[o+2]===1; S.chgR=b[o+3]===1; o+=4; break;
+      case "dualBattLevel": S.battL=b[o]; S.battR=b[o+1]; o+=2; break;
+      case "singleBatt": S.battS=b[o]; S.chgS=b[o+1]===1; o+=2; break;
+      case "singleBattChgFirst": S.chgS=b[o]===1; S.battS=b[o+1]; o+=2; break;
+      case "battLevel": S.battS=b[o]; o+=1; break;
+      case "fw": S.fwL=fw(b.slice(o,o+5)); o+=5; break;
+      case "dualFw": S.fwL=fw(b.slice(o,o+5)); S.fwR=fw(b.slice(o+5,o+10)); o+=10; break;
+      case "serial": S.serial=ascii(b.slice(o,o+16)); o+=16; break;
+      case "skip": o+=a1; break;
+      case "caseBatt": S.caseBatt=b[o]; o+=1; break;
+      case "eq": { const C=a1,B=a2; S.eq={preset:b[o]|(b[o+1]<<8), C, B, bands:Array.from(b.slice(o+2,o+2+B),x=>x-120)}; o+=2+C*B; break; }
+      case "eqUnk": S.eqUnk=b[o]; o+=1; break;
+      case "gender": S.gender=b[o]; o+=1; break;
+      case "age": S.age=b[o]; o+=1; break;
+      case "hearInit": S.hearInit=!(b[o]===255||b[o]===254); o+=1; break;
+      case "hearEnd": [S.hear,o]=hearFrom(b,o,a1,a2,"end"); break;
+      case "hearMid": [S.hear,o]=hearFrom(b,o,a1,a2,"mid"); break;
+      case "hearBasic": [S.hear,o]=hearFrom(b,o,a1,a2,"basic"); break;
+      case "hear3947": [S.hear,o]=hearFrom(b,o,a1,a2,"3947"); break;
+      case "hear3035": [S.hear,o]=hearFrom(b,o,a1,a2,"3035"); break;
+      case "hearIfAge": if(S.age===255) o+=48; else [S.hear,o]=hearFrom(b,o,a1,a2,"end"); break;
+      case "customLen": customLen=b[o]; o+=1; break;
+      case "gap18": o+=Math.max(0,customLen-18); break;
+      case "buttons": {
+        const defs=prof().buttons||{};
+        for(const [side,press] of a1){
+          const d=defs[press];
+          if(!d){ o+=1; continue; }
+          const st={};
+          if(d.en!=="N"){ st.en=b[o]; o+=1; }
+          st.act=b[o]; o+=1;
+          S.btnState[side+press]=st;
+        }
+        break;
+      }
+      case "cycle": S.cycle=b[o]; o+=1; break;
+      case "cycleTws": S.cycle=b[o]&0x0f; S.cycleHi=b[o]&0xf0; S.cycleTws=true; o+=1; break;
+      case "sound": { const f=SOUND[a1]; S.soundFmt=a1; S.soundRaw=Array.from(b.slice(o,o+f.len)); o+=f.len; break; }
+      case "dual": S.dual=b[o]===1; o+=1; break;
+      case "apo": S.apoOn=b[o]===1; S.apoDur=b[o+1]; o+=2; break;
+      case "lhv": S.lhvOn=b[o]===1; S.lhvDb=b[o+1]; o+=3; break;
+      case "spatialD1202": S.spatialOn=b[o]===1; S.spatialMode=b[o+1]; o+=2; break;
+      default:
+        if(FLAGS[t]){ S[t] = FLAGS[t][2] ? b[o]!==1 : b[o]===1; o+=1; }
+        else { console.warn("unknown layout token", t); }
+    }
+  }
+}
 function handlePacket(cmd, body){
   const p=prof();
-  if(is(cmd,CMD.STATE)) { if(p && body.length>=p.minLen) p.parse(body); }
-  else if(is(cmd,CMD.SOUND_UPD) && p) { if(p.sound==="d1202" && body.length>=8) S.sound=parseSoundD1202(body,0); else if(p.sound==="a3959" && body.length>=7) S.sound=parseSound(body,0); render(); }
-  else if(is(cmd,CMD.LDAC_UPD) && body.length>=1) { S.ldac=body[0]===1; render(); }
-  else if(is(cmd,CMD.BATT) && body.length>=2) { S.battL=body[0]; S.battR=body[1]; render(); }
-  else if(is(cmd,CMD.CHG) && body.length>=2) { S.chgL=body[0]===1; S.chgR=body[1]===1; render(); }
+  if(is(cmd,CMD.STATE)) {
+    if(p?.layout){ parseLayout(body, p.layout); S.loaded=true; buildDeviceUI(); setConnUI(); render();
+      if(S.dual) send(CMD.DUAL_LIST,[],"request dual-connection devices"); }
+  }
+  else if(is(cmd,CMD.SOUND_UPD) && S.soundFmt && body.length>=SOUND[S.soundFmt].len) { S.soundRaw=Array.from(body.slice(0,SOUND[S.soundFmt].len)); render(); }
+  else if(is(cmd,CMD.BATT) && body.length>=1) { if(p?.single||!p&&body.length===1) S.battS=body[0]; else if(body.length>=2){ S.battL=body[0]; S.battR=body[1]; } render(); }
+  else if(is(cmd,CMD.CHG) && body.length>=1) { if(p?.single||!p&&body.length===1) S.chgS=body[0]===1; else if(body.length>=2){ S.chgL=body[0]===1; S.chgR=body[1]===1; } render(); }
   else if(is(cmd,CMD.TWS) && body.length>=2) { S.host=body[0]; S.twsConnected=body[1]===1; render(); }
-  else if(is(cmd,CMD.GAMING_UPD) && body.length>=1) { S.gaming=body[0]===1; render(); }
-  else if(is(cmd,CMD.SERIAL) && body.length>=26) { S.fwL=fw(body.slice(0,5)); S.fwR=fw(body.slice(5,10)); S.serial=ascii(body.slice(10,26)); render(); }
+  else if(is(cmd,CMD.GAMING_UPD) && body.length>=1 && S.gaming!==undefined) { S.gaming=body[0]===1; render(); }
+  else if(is(cmd,CMD.LDAC_UPD) && body.length>=1 && S.ldac!==undefined) { S.ldac=body[0]===1; render(); }
+  else if(is(cmd,CMD.SERIAL)) {
+    if(body.length>=26){ S.fwL=fw(body.slice(0,5))||S.fwL; S.fwR=fw(body.slice(5,10))||S.fwR; S.serial=ascii(body.slice(10,26)); }
+    else if(body.length>=21){ S.fwL=fw(body.slice(0,5))||S.fwL; S.serial=ascii(body.slice(5,21)); }
+    render();
+  }
   else if(is(cmd,CMD.DUAL_LIST) && body.length>=2) parseDual(body);
-}
-function fw(b){ const s=ascii(b); return /^\d\d\.\d\d$/.test(s) ? s : null; }
-function parseSound(b,o){
-  return { ambient:b[o], manual:(b[o+1]>>4)&0xf, adaptive:b[o+1]&0xf, ncMode:b[o+3],
-           windOn:!!(b[o+4]&1), windDetected:!!(b[o+4]&2), sens:b[o+5], scene:b[o+6] };
-}
-function parseSoundD1202(b,o){
-  return { ambient:b[o], manual:(b[o+1]>>4)&0xf, adaptive:b[o+1]&0xf, transparency:b[o+2], ncMode:b[o+3],
-           windOn:!!(b[o+4]&1), windDetected:!!(b[o+4]&2), scene:b[o+6], realtime:b[o+7]===1 };
-}
-function parseHeader(b){ // shared start of the state packet for TWS earbuds
-  S.host=b[0]; S.twsConnected=b[1]===1;
-  S.battL=b[2]; S.battR=b[3]; S.chgL=b[4]===1; S.chgR=b[5]===1;
-  S.fwL=fw(b.slice(6,11)); S.fwR=fw(b.slice(11,16));
-  S.serial=ascii(b.slice(16,32));
-}
-function finishState(){
-  S.loaded=true;
-  setConnUI(); render();
-  if(S.dual) send(CMD.DUAL_LIST,[],"request dual-connection devices");
-}
-// soundcore R60i NC / P31i (D1202 family)
-function parseD1202(b){
-  parseHeader(b);
-  S.caseBatt=b[37];
-  S.eqPreset=b[38]|(b[39]<<8);
-  S.eqBands=Array.from(b.slice(40,50),x=>x-120);
-  S.hearId=Array.from(b.slice(61,109)); // enabled, 2x10 bands, time(4), type, 2x10 custom bands, genre(2)
-  S.buttons=Array.from(b.slice(110,118));
-  S.sound=parseSoundD1202(b,119);
-  S.touchTone=b[128]===1; S.lowBatt=b[129]===1; S.ldac=b[130]===1; S.dual=b[131]===1;
-  S.apoOn=b[132]===1; S.apoDur=b[133];
-  S.lhvOn=b[134]===1; S.lhvDb=b[135];
-  S.spatialOn=b[137]===1; S.spatialMode=b[138];
-  finishState();
-}
-// soundcore R50i NC / P30i (A3959)
-function parseA3959(b){
-  let o=0;
-  S.host=b[o]; S.twsConnected=b[o+1]===1; o+=2;
-  S.battL=b[o]; S.battR=b[o+1]; S.chgL=b[o+2]===1; S.chgR=b[o+3]===1; o+=4;
-  S.fwL=fw(b.slice(o,o+5)); S.fwR=fw(b.slice(o+5,o+10)); o+=10;
-  S.serial=ascii(b.slice(o,o+16)); o+=16;
-  S.eqPreset=b[o]|(b[o+1]<<8); o+=2;
-  S.eqBands=Array.from(b.slice(o,o+10),x=>x-120); o+=10;
-  o+=11; // unknown
-  S.buttons=Array.from(b.slice(o,o+8)); o+=8;
-  S.cycle=b[o]; o+=1;
-  S.sound=parseSound(b,o); o+=7;
-  o+=1; // unknown
-  S.touchTone=b[o]===1; o+=1;
-  S.dual=b[o]===1; o+=1;
-  S.surround=b[o]===1; o+=1;
-  S.apoOn=b[o]===1; S.apoDur=b[o+1]; o+=2;
-  S.lowBatt=b[o]===1; o+=1;
-  S.gaming=b[o]===1; o+=1;
-  finishState();
 }
 function parseDual(b){
   const total=b[0], idx=b[1];
   if(idx===1) dualPackets=[];
-  let o=2; const devs=[];
+  let o=2;
   while(o<b.length){
     const len=b[o]; if(!len) break;
     const isConn=b[o+1]===1; const mac=Array.from(b.slice(o+2,o+8),x=>x.toString(16).padStart(2,"0")).join(":");
     const nameBytes=b.slice(o+8, Math.min(b.length, o+len));
-    devs.push({isConn, mac, name:new TextDecoder().decode(nameBytes).replace(/\0.*$/s,"")});
+    dualPackets.push({isConn, mac, name:new TextDecoder().decode(nameBytes).replace(/\0.*$/s,"")});
     o+=len;
   }
-  dualPackets.push(...devs);
   if(idx>=total){ S.dualDevices=dualPackets; render(); }
 }
 
-/* ---------- rendering ---------- */
-const battPct = l => (l==null||l>9) ? null : (l+1)*10; // device reports 0..9 = 10%..100%
-function battText(l){ const p=battPct(l); return p==null ? "–" : p+"%"; }
-function pressSeg(id, v){ $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(+x.dataset.v===v))); }
+/* =====================================================================
+   Rendering
+   ===================================================================== */
+function pct(level, cfg){ if(level==null||level===255||!cfg) return null; const [max,off]=cfg; const v=Math.round((level+off)/max*100); return v>100?null:v; }
+function setBatt(id, meter, level, cfg){ const v=pct(level,cfg); $(id).textContent=v==null?"–":v+"%"; $(meter).style.width=(v||0)+"%"; }
+function pressSeg(el, v){ el.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(+x.dataset.v===v))); }
+const fmtDb = v => (v>0?"+":"")+(v/10).toFixed(1);
+
 function render(){
   if(!connected) return;
+  const p=prof();
   $("devName").textContent = (S.modelName||"soundcore device") + (S.modelCode? " · "+S.modelCode:"");
-  $("battL").textContent=battText(S.battL); $("battR").textContent=battText(S.battR);
-  $("mL").style.width=(battPct(S.battL)||0)+"%"; $("mR").style.width=(battPct(S.battR)||0)+"%";
-  $("chgL").textContent=S.chgL?"⚡ Charging":""; $("chgR").textContent=S.chgR?"⚡ Charging":"";
-  $("caseText").textContent = battPct(S.caseBatt)!=null ? "Charging case: "+battPct(S.caseBatt)+"%" : "";
-  $("twsText").textContent = S.twsConnected===undefined ? "" :
+  const single = !!p?.single || (!p && S.battS!==undefined);
+  $("battDual").hidden=single; $("battSingle").hidden=!single;
+  const cfg=p?.batt||[5,0];
+  if(single){ setBatt("battS","mS",S.battS,cfg); $("chgS").textContent=S.chgS?"⚡ Charging":""; }
+  else { setBatt("battL","mL",S.battL,cfg); setBatt("battR","mR",S.battR,cfg);
+    $("chgL").textContent=S.chgL?"⚡ Charging":""; $("chgR").textContent=S.chgR?"⚡ Charging":""; }
+  const cv=pct(S.caseBatt, p?.caseBatt||p?.batt);
+  $("caseText").textContent = cv!=null ? "Charging case: "+cv+"%" : "";
+  $("twsText").textContent = (single||S.twsConnected===undefined) ? "" :
      (S.twsConnected ? "Both earbuds connected" : "Only one earbud connected") + " · main: " + (S.host===1?"right":"left");
-  $("iModel").textContent=(S.modelName||"–")+(S.modelCode?" ("+S.modelCode+")":""); $("iSerial").textContent=S.serial||"–";
-  $("iFwL").textContent=S.fwL||"–"; $("iFwR").textContent=S.fwR||"–";
+  $("iModel").textContent=(S.modelName||"–")+(S.modelCode?" ("+S.modelCode+")":"");
+  $("iSerial").textContent=S.serial||"–";
+  $("iFw").textContent=[S.fwL,S.fwR].filter(Boolean).join(" / ")||"–";
+  $("supportNote").textContent = !p ? "Settings for this model aren't supported yet." :
+     (S.modelCode==="A3959"||PROFILE_OF[S.modelCode]==="D1202") ? "" :
+     "Settings for this model are based on the open-source OpenSCQ30 project and haven't been tested with a real device in this app. If something doesn't work, check the packet log.";
 
-  const sm=S.sound;
-  if(sm){
-    pressSeg("ambientSeg", sm.ambient);
-    $("ncBox").hidden = sm.ambient!==0;
-    pressSeg("ncModeSeg", sm.ncMode);
-    $("manualBox").hidden = sm.ncMode!==0;
-    $("adaptiveBox").hidden = sm.ncMode!==1;
-    $("sceneBox").hidden = sm.ncMode!==2;
-    $("manual").value=sm.manual; $("manualVal").textContent=sm.manual+" / 5";
-    const d1202 = prof()?.sound==="d1202";
-    $("adaptiveVal").textContent = d1202 ? (["Weak","Moderate","Strong"][sm.adaptive]||"–") : sm.adaptive+" / 5";
-    $("sensRow").hidden = d1202; $("rtRow").hidden = !d1202;
-    if(!d1202){ $("sens").value=sm.sens; $("sensVal").textContent=sm.sens+" / 10"; }
-    $("realtime").checked=!!sm.realtime;
-    $("trBox").hidden = !d1202 || sm.ambient!==1;
-    pressSeg("trSeg", sm.transparency);
-    pressSeg("sceneSeg", sm.scene);
-    $("windRow").hidden = sm.ambient===2;
-    $("wind").checked=sm.windOn; $("windDet").textContent = sm.windDetected ? "Wind detected right now" : "";
-  }
-  if(S.eqBands){
-    const known = PRESETS.some(p=>p[1]===S.eqPreset);
-    $("preset").value = known ? String(S.eqPreset) : String(CUSTOM_ID);
-    S.eqBands.slice(0,8).forEach((v,i)=>{ const r=$("band"+i); if(r && document.activeElement!==r){ r.value=v; } $("bv"+i).textContent=fmtDb(v); });
-  }
-  if(S.buttons){
-    const order=[[0,1],[2,3],[4,5],[6,7]];
-    order.forEach(([li,ri],k)=>{
-      for(const [idx,side] of [[li,"L"],[ri,"R"]]){
-        const sel=$("bt"+k+side); const cur = S.twsConnected===false ? (S.buttons[idx]>>4) : (S.buttons[idx]&0xf);
-        sel.value=String(cur);
-      }
-    });
-  }
+  renderSound(); renderEq(); renderButtons(); renderMisc();
+  $("cycleCard").hidden = S.cycle===undefined;
   if(S.cycle!==undefined){ $("cyNc").checked=!!(S.cycle&1); $("cyTr").checked=!!(S.cycle&2); $("cyNo").checked=!!(S.cycle&4); }
-  $("touchTone").checked=!!S.touchTone; $("surround").checked=!!S.surround; $("lowBatt").checked=!!S.lowBatt;
-  $("apoOn").checked=!!S.apoOn; $("apoDur").value=String(S.apoDur??0); $("apoDur").disabled=!S.apoOn;
-  const gameOk = !S.fwL || !S.fwR || Math.min(parseFloat(S.fwL),parseFloat(S.fwR))>=1.6;
-  $("gaming").checked=!!S.gaming; $("gaming").disabled=!gameOk;
-  $("gameNote").textContent = gameOk ? "" : "Needs firmware 01.60 or newer";
+  $("dualCard").hidden = S.dual===undefined;
   $("dual").checked=!!S.dual;
-  $("ldac").checked=!!S.ldac;
-  $("lhvOn").checked=!!S.lhvOn; if(S.lhvDb) $("lhvDb").value=String(S.lhvDb); $("lhvDb").disabled=!S.lhvOn;
-  $("spatial").checked=!!S.spatialOn; if(S.spatialMode!=null) $("spatialMode").value=String(S.spatialMode);
   const ul=$("devList"); ul.innerHTML="";
   if(S.dual && S.dualDevices){ for(const d of S.dualDevices){ const li=document.createElement("li"); li.innerHTML=`<span></span><span class="sub"></span>`; li.firstChild.textContent=d.name||d.mac; li.lastChild.textContent=d.isConn?"Connected":"Paired"; ul.appendChild(li);} }
   $("devRefresh").hidden=!S.dual;
 }
-const fmtDb = v => (v>0?"+":"")+(v/10).toFixed(1);
 
-/* ---------- actions ---------- */
-function soundBytes(sm){
-  const anc=((sm.manual&0xf)<<4)|(sm.adaptive&0xf), wind=(sm.windOn?1:0)|(sm.windDetected?2:0);
-  if(prof()?.sound==="d1202") return [sm.ambient, anc, sm.transparency, sm.ncMode, wind, 0, sm.scene, sm.realtime?1:0];
-  return [sm.ambient, anc, sm.ambient, sm.ncMode, wind, sm.sens, sm.scene];
-}
-// Apply a mode switch to the earbuds' current layout (used by profile-aware UI applying)
-function applyProfileUI(){
-  const p=prof();
-  document.querySelectorAll("[data-feat]").forEach(el=>{ el.hidden = !p || !p.feats.includes(el.dataset.feat); });
-  // single tap on some models only allows a reduced action list
-  for(const side of ["L","R"]){
-    const sel=$("bt0"+side); if(!sel) continue;
-    [...sel.options].forEach(o=>{ o.hidden = !!p?.singleMinimal && !MINIMAL_ACTIONS.has(+o.value); });
+/* ---------- sound modes (generic) ---------- */
+let soundEls=[];
+function buildSoundUI(){
+  const box=$("soundBody"); box.innerHTML=""; soundEls=[];
+  const f=SOUND[S.soundFmt]; if(!f) return;
+  for(const c of f.ctl){
+    let el;
+    if(c.type==="seg"){
+      el=document.createElement("div"); el.className="seg";
+      for(const [v,n] of c.opts){ const b=document.createElement("button"); b.dataset.v=v; b.textContent=n; el.appendChild(b); }
+      el.onclick=e=>{ const b=e.target.closest("button"); if(b) setSoundCtl(c, +b.dataset.v); };
+    } else {
+      el=document.createElement("div"); el.className="row";
+      const lab=document.createElement("label"); lab.textContent=c.label||""; const sub=document.createElement("span"); sub.className="sub"; lab.append(" ",sub); el.appendChild(lab);
+      if(c.type==="range"){ const r=document.createElement("input"); r.type="range"; r.min=c.min; r.max=c.max; r.step=1;
+        r.oninput=()=>sub.textContent=r.value+" / "+c.max; r.onchange=()=>setSoundCtl(c,+r.value); el.appendChild(r); el._in=r; el._sub=sub; }
+      else if(c.type==="select"){ const s=document.createElement("select"); for(const [v,n] of c.opts) s.add(new Option(n,String(v)));
+        s.onchange=()=>setSoundCtl(c,+s.value); el.appendChild(s); el._in=s; }
+      else if(c.type==="toggle"){ const sw=document.createElement("label"); sw.className="switch"; sw.innerHTML=`<input type="checkbox"><span></span>`;
+        const i=sw.querySelector("input"); i.onchange=()=>setSoundCtl(c,i.checked?1:0); el.appendChild(sw); el._in=i; el._sub=sub; }
+      else if(c.type==="info"){ const v=document.createElement("span"); el.appendChild(v); el._val=v; }
+    }
+    soundEls.push([c,el]); box.appendChild(el);
   }
 }
-async function setSound(patch){
-  if(!S.sound) return;
-  const prev=S.sound; const next={...prev,...patch};
-  // switch the top-level mode first, then the sub-settings (mirrors how the official app steps through modes)
-  if(patch.ambient!==undefined && patch.ambient!==prev.ambient && Object.keys(patch).length>1){
-    await send(CMD.SET_SOUND, soundBytes({...prev, ambient:patch.ambient}), "sound mode step");
+function renderSound(){
+  const raw=S.soundRaw; $("soundCard").hidden=!raw;
+  if(!raw) return;
+  for(const [c,el] of soundEls){
+    el.hidden = c.show ? !c.show(raw) : false;
+    const v=c.get(raw);
+    if(c.type==="seg") pressSeg(el, v);
+    else if(c.type==="range"){ if(document.activeElement!==el._in) el._in.value=v; el._sub.textContent=v+" / "+c.max; }
+    else if(c.type==="select") el._in.value=String(v);
+    else if(c.type==="toggle"){ el._in.checked=!!v; if(c.detect!==undefined) el._sub.textContent = (raw[c.detect]&2) ? "· wind detected now" : ""; }
+    else if(c.type==="info") el._val.textContent=c.fmt?c.fmt(v):v;
   }
-  S.sound=next; render();
-  await send(CMD.SET_SOUND, soundBytes(next), "set sound mode");
+}
+async function setSoundCtl(c, v){
+  const raw=[...S.soundRaw];
+  c.set(raw, v);
+  if(c.key==="ambient" && c.mirror!==undefined) raw[c.mirror]=v;
+  S.soundRaw=raw; render();
+  await send(CMD.SET_SOUND, raw, "set sound mode");
 }
 
-function drc(adj10){ // port of the DRC transform the device expects for band values (tenths of dB)
+/* ---------- equalizer ---------- */
+function drc(adj10){ // DRC transform some models expect for band values (tenths of dB)
   const a = adj10.map(v=>v/10); const S1=0.85, L1=0.95;
   const lows=a[2]*0.81*S1, highs=a[5]*0.81*S1;
   const C=[
@@ -695,56 +911,188 @@ function drc(adj10){ // port of the DRC transform the device expects for band va
     for(let i=0;i<8;i++){
       if((bi===1||bi===3)&&i===2) acc-=lows;
       else if((bi===4||bi===6)&&i===5) acc-=highs;
-      else acc+=a[i]*C[bi][i];
+      else acc+=(a[i]||0)*C[bi][i];
     }
     const x=(acc/10)*10; out.push(Math.sign(x)*Math.round(Math.abs(x)));
   }
   out.push(0,-120);
-  return out.map(v=>Math.max(-120,Math.min(134,v)));
+  return out.slice(0,adj10.length).map(v=>Math.max(-120,Math.min(134,v)));
+}
+const toByte = v => Math.max(-120,Math.min(134,v))+120;
+function hearBlock(arr, n, last0){ // re-encode hear-id bands; empty channels are 0xFF (some models want the last byte 0)
+  const out=[]; const B=S.eq.B;
+  for(let c=0;c<n/B;c++){
+    let ch = arr ? arr.slice(c*B,(c+1)*B) : new Array(B).fill(0xff);
+    if(ch.length<B) ch=new Array(B).fill(0xff);
+    if(last0 && ch[0]===0xff){ ch=[...ch]; ch[B-1]=0; }
+    out.push(...ch);
+  }
+  return out;
+}
+function encodeEq(){
+  const p=prof(), e=S.eq, C=e.C, B=e.B, id=e.preset;
+  const bands=e.bands.slice(0,B);
+  const raw=bands.map(toByte), all=[].concat(...Array(C).fill(raw));
+  const drcCh=drc(bands).map(toByte), drcAll=[].concat(...Array(C).fill(drcCh));
+  const pre=[id&0xff, id>>8];
+  const h=S.hear||{vol:null,custom:null,time:[0,0,0,0],type:0,genre:[0,0]};
+  const n=C*B;
+  switch(p.eq){
+    case "plain": return [[0x02,0x81], [...pre, ...all]];
+    case "drc":   return [[0x02,0x83], [...pre, ...all, ...drcAll]];
+    case "drc1":  return [[0x02,0x83], [...pre, ...raw, ...drcCh]];
+    case "commonHear": {
+      const supports = p.forceHear || (S.age ?? 0) !== 255; // age 255 = no HearID data on the device
+      const ff=new Array(n).fill(255);
+      const body=[...pre, ...(supports?h.genre:[]), ...all, supports?(S.gender??0):255, supports?(S.age??0):255, 0,
+        ...(supports?hearBlock(h.vol,n):ff), ...(supports?h.time:[0,0,0,0]), h.type||0, ...(supports?hearBlock(h.custom,n):ff), ...drcAll];
+      return [supports?[0x03,0x87]:[0x03,0x86], body];
+    }
+    case "hearStd": return [[0x03,0x87], [...pre, ...h.genre, ...all, 0,0, 0, ...hearBlock(h.vol,n), ...h.time, h.type, ...hearBlock(h.custom,n), ...all.flatMap(x=>[x,0]), 0,0]];
+    case "hearDrc": {
+      const mid = p.hearMid==="init" ? (S.hearInit===false?[255,255]:[0,0]) : [255,255];
+      return [[0x03,0x87], [...pre, ...h.genre, ...all, ...mid, 0, ...hearBlock(h.vol,n,true), ...h.time, h.type, ...hearBlock(h.custom,n,true), ...drcAll, 0]];
+    }
+    case "hearA3062": return [[0x03,0x87], [...pre, ...h.genre, ...all, 0,0, 0, ...hearBlock(h.vol,n), ...h.time, h.type, ...hearBlock(h.custom,n), ...all, 0]];
+    case "hearA3947": { const d9=[...drcCh]; d9[9]=0; return [[0x03,0x87], [...pre, ...h.genre, ...all, 0,0, 0, ...hearBlock(h.vol,n), ...h.time, h.type, ...hearBlock(h.custom,n), ...[].concat(...Array(C).fill(d9)), 0]]; }
+    case "hearA3040": { const hv=hearBlock(h.vol,2*B), hc=hearBlock(h.custom,B); return [[0x03,0x87], [...pre, ...h.genre, ...raw, ...raw, 0,1, 0, ...hv, ...h.time, h.type, ...hc, ...hc, ...drcCh, ...drcCh, 0]]; }
+    case "hearD1402": return [[0x03,0x87], [...pre, ...h.genre, ...all, S.eqUnk??0, S.age??0, 0, ...hearBlock(h.vol,n,true), ...h.time, h.type, ...hearBlock(h.custom,n,true), ...drcAll, 0]];
+  }
+  return null;
 }
 let eqTimer=null;
 function queueEq(){ clearTimeout(eqTimer); eqTimer=setTimeout(sendEq,180); }
 async function sendEq(){
-  const id=S.eqPreset; const bands=S.eqBands;
-  const raw=bands.map(v=>Math.max(-120,Math.min(134,v))+120);
-  if(prof()?.eq==="hearid"){
-    // Equalizer with HearID block (D1202 family). HearID is sent disabled so the EQ below takes effect.
-    const h=S.hearId||new Array(48).fill(0);
-    const volAdj=h.slice(1,21), time=h.slice(21,25), type=h[25], custom=h.slice(26,46), genre=h.slice(46,48);
-    const both=[...raw,...raw];
-    const interleaved=both.flatMap(x=>[x,0]);
-    await send(CMD.SET_EQ_HEARID, [id&0xff, id>>8, ...genre, ...both, 0,0, 0, ...volAdj, ...time, type, ...custom, ...interleaved, 0,0], "set equalizer");
-    S.spatialOn=false; render(); // the device turns spatial audio off when an EQ is applied
-    return;
-  }
-  const d=drc(bands).map(v=>v+120);
-  await send(CMD.SET_EQ_DRC, [id&0xff, id>>8, ...raw, ...d], "set equalizer");
+  const r=encodeEq(); if(!r) return;
+  await send(r[0], r[1], "set equalizer");
+  if(S.spatialOn!==undefined){ S.spatialOn=false; render(); } // these devices turn spatial audio off when an EQ is applied
 }
 function choosePreset(id){
-  const p=PRESETS.find(x=>x[1]===id);
-  S.eqPreset=id;
-  if(p) S.eqBands=[...p[2],0,-120];
-  else S.eqBands=[...S.eqBands.slice(0,8),...(prof()?.customTail||[0,0])];
+  const e=S.eq; const p=PRESETS.find(x=>x[1]===id);
+  e.preset=id;
+  const tail = p ? [0,-120] : (prof().customTail||[0,0]);
+  e.bands = [...(p?p[2]:e.bands.slice(0,8)), ...tail].slice(0,e.B);
   render(); sendEq();
+}
+function renderEq(){
+  const p=prof(), e=S.eq;
+  $("eqCard").hidden = !e || !p?.eq;
+  if(!e) return;
+  const known = PRESETS.some(x=>x[1]===e.preset);
+  $("preset").value = known ? String(e.preset) : String(CUSTOM_ID);
+  for(let i=0;i<8;i++){ const r=$("band"+i); const v=e.bands[i]??0; if(r && document.activeElement!==r) r.value=v; $("bv"+i).textContent=fmtDb(v); }
+}
+
+/* ---------- touch controls ---------- */
+function curAction(st, d){ return d.act==="T" ? (S.twsConnected===false ? st.act>>4 : st.act&0x0f) : st.act; }
+function curEnabled(st, d){
+  if(d.en==="N") return curAction(st,d)!==15;
+  if(d.en==="S") return st.en===1;
+  return ((S.twsConnected===false ? st.en>>4 : st.en&0x0f)===1);
+}
+function buildButtonsUI(){
+  const g=$("btnGrid"); g.innerHTML=`<span></span><span class="h">Left</span><span class="h">Right</span>`;
+  const defs=prof()?.buttons; if(!defs) return;
+  const presses=[...new Set(Object.keys(S.btnState||{}).map(k=>k.slice(1)))].filter(x=>defs[x]);
+  presses.sort((a,b)=>Object.keys(PRESS_ID).indexOf(a)-Object.keys(PRESS_ID).indexOf(b));
+  for(const press of presses){
+    const d=defs[press];
+    const lab=document.createElement("span"); lab.textContent=PRESS_NAMES[press]; g.appendChild(lab);
+    for(const side of ["L","R"]){
+      const s=document.createElement("select"); s.id="bt_"+side+press;
+      for(const a of d.acts) s.add(new Option(ACT_NAMES[a],String(a)));
+      if(d.dis) s.add(new Option("Disabled","15"));
+      if(!S.btnState[side+press]) s.disabled=true;
+      s.onchange=()=>setButton(side,press,+s.value); g.appendChild(s);
+    }
+  }
+}
+function renderButtons(){
+  const defs=prof()?.buttons;
+  $("btnCard").hidden = !defs || !S.btnState || !Object.keys(S.btnState).length;
+  if($("btnCard").hidden) return;
+  for(const [k,st] of Object.entries(S.btnState)){
+    const sel=$("bt_"+k); if(!sel) continue; const d=defs[k.slice(1)];
+    sel.value = curEnabled(st,d) ? String(curAction(st,d)) : "15";
+  }
+}
+async function setButton(side, press, action){
+  const d=prof().buttons[press], st=S.btnState[side+press];
+  const sideByte = side==="L"?0:1;
+  const disc = S.twsConnected===false;
+  const withNibble = (byte, v) => disc ? ((v&0xf)<<4)|(byte&0x0f) : (byte&0xf0)|(v&0x0f);
+  if(action===15 && d.en!=="N"){ // disable via the enabled flag
+    st.en = d.en==="S" ? 0 : withNibble(st.en, 0);
+    await send(CMD.SET_BUTTON_EN, [sideByte, d.id, st.en], "disable touch control"); return;
+  }
+  if(d.en!=="N" && !curEnabled(st,d)){
+    st.en = d.en==="S" ? 1 : withNibble(st.en, 1);
+    await send(CMD.SET_BUTTON_EN, [sideByte, d.id, st.en], "enable touch control");
+  }
+  st.act = d.act==="T" ? withNibble(st.act, action) : action;
+  await send(CMD.SET_BUTTON, [sideByte, d.id, st.act], "set touch control");
+}
+
+/* ---------- general settings ---------- */
+function buildMiscUI(){
+  const box=$("miscBody"); box.innerHTML="";
+  const p=prof(); if(!p) return;
+  const row=(html)=>{ const d=document.createElement("div"); d.className="row"; d.innerHTML=html; box.appendChild(d); return d; };
+  if(S.spatialOn!==undefined){
+    row(`<label>Spatial audio</label><label class="switch"><input type="checkbox" id="spatial"><span></span></label>`);
+    row(`<label>Spatial audio mode</label><select id="spatialMode"><option value="0">Music</option><option value="2">Movie</option><option value="3">Gaming</option></select>`);
+    $("spatial").onchange=e=>setSpatial(e.target.checked, +$("spatialMode").value);
+    $("spatialMode").onchange=e=>{ if(S.spatialOn) setSpatial(true, +e.target.value); else S.spatialMode=+e.target.value; };
+  }
+  for(const [k,[label,cmd,inv]] of Object.entries(FLAGS)){
+    if(S[k]===undefined) continue;
+    const d=row(`<label>${label}<div class="sub" id="note_${k}"></div></label><label class="switch"><input type="checkbox" id="fl_${k}"><span></span></label>`);
+    $("fl_"+k).onchange=async e=>{ S[k]=e.target.checked; render(); await send(cmd,[(inv? !S[k] : S[k])?1:0], label); };
+  }
+  if(S.lhvOn!==undefined){
+    row(`<label>Limit high volume</label><label class="switch"><input type="checkbox" id="lhvOn"><span></span></label>`);
+    row(`<label>Volume limit</label><select id="lhvDb"><option>75</option><option>80</option><option>85</option><option>90</option><option>95</option><option>100</option></select>`);
+    const lhv=()=>{ S.lhvOn=$("lhvOn").checked; S.lhvDb=+$("lhvDb").value; render(); send(CMD.SET_LHV,[S.lhvOn?1:0,S.lhvDb],"limit high volume"); };
+    $("lhvOn").onchange=lhv; $("lhvDb").onchange=lhv;
+  }
+  if(S.apoOn!==undefined){
+    row(`<label>Auto power off</label><label class="switch"><input type="checkbox" id="apoOn"><span></span></label>`);
+    const opts=(APO_LISTS[p.apo]||APO_LISTS["10"]).map((n,i)=>`<option value="${i}">${n}</option>`).join("");
+    row(`<label>Power off after</label><select id="apoDur">${opts}</select>`);
+    const apo=()=>{ S.apoOn=$("apoOn").checked; S.apoDur=+$("apoDur").value; render(); send(CMD.SET_APO,[S.apoOn?1:0,S.apoDur],"auto power off"); };
+    $("apoOn").onchange=apo; $("apoDur").onchange=apo;
+  }
+}
+function renderMisc(){
+  const box=$("miscBody");
+  $("miscCard").hidden = !box.children.length;
+  for(const k of Object.keys(FLAGS)){
+    const el=$("fl_"+k); if(!el) continue;
+    el.checked=!!S[k];
+    if(k==="gaming"){ const min=prof()?.minFw?.gaming; const fws=[S.fwL,S.fwR].filter(Boolean).map(parseFloat);
+      const ok=!min || !fws.length || Math.min(...fws)>=min; el.disabled=!ok; $("note_gaming").textContent=ok?"":"Needs firmware "+min.toFixed(2)+" or newer"; }
+    if(k==="ldac") $("note_ldac").textContent="Uses more battery; needs an LDAC-capable phone";
+  }
+  if($("lhvOn")){ $("lhvOn").checked=!!S.lhvOn; if(S.lhvDb) $("lhvDb").value=String(S.lhvDb); $("lhvDb").disabled=!S.lhvOn; }
+  if($("apoOn")){ $("apoOn").checked=!!S.apoOn; $("apoDur").value=String(S.apoDur??0); $("apoDur").disabled=!S.apoOn; }
+  if($("spatial")){ $("spatial").checked=!!S.spatialOn; if(S.spatialMode!=null) $("spatialMode").value=String(S.spatialMode); }
 }
 async function setSpatial(on, mode){
   S.spatialMode=mode;
   if(on){ S.spatialOn=true; render(); await send(CMD.SET_SPATIAL,[1,0,mode],"spatial audio on"); }
-  else { S.spatialOn=false; render(); S.eqBands[8]=0; S.eqBands[9]=-120; await sendEq(); } // the official app turns it off by re-sending the EQ
+  else { S.spatialOn=false; render(); if(S.eq){ S.eq.bands[8]=0; S.eq.bands[9]=-120; await sendEq(); } } // turned off by re-sending the EQ, like the official app
 }
-async function setButton(k, side, action){
-  const [ ,buttonId]=PRESS[k]; const idx=k*2+(side==="L"?0:1);
-  const cur=S.buttons[idx];
-  const next = S.twsConnected===false ? ((action&0xf)<<4)|(cur&0xf) : (cur&0xf0)|(action&0xf);
-  S.buttons[idx]=next;
-  await send(CMD.SET_BUTTON, [side==="L"?0:1, buttonId, next], "set touch control");
-}
-async function flag(cmd, key, val, note){ S[key]=val; render(); await send(cmd,[val?1:0],note); }
 
-/* ---------- build UI ---------- */
+function buildDeviceUI(){
+  buildSoundUI(); buildButtonsUI(); buildMiscUI();
+}
+
+/* =====================================================================
+   Static UI wiring
+   ===================================================================== */
 function buildUI(){
   const sel=$("preset");
-  for(const [n,id] of PRESETS){ const o=new Option(n,String(id)); sel.add(o); }
+  for(const [n,id] of PRESETS) sel.add(new Option(n,String(id)));
   sel.add(new Option("Custom",String(CUSTOM_ID)));
   sel.onchange=()=>choosePreset(+sel.value);
   const eq=$("eqBands");
@@ -753,52 +1101,20 @@ function buildUI(){
     d.innerHTML=`<output id="bv${i}">0.0</output><input type="range" id="band${i}" min="-60" max="60" step="5" value="0" aria-label="${hz} Hz"><span>${hz}</span>`;
     eq.appendChild(d);
     d.querySelector("input").addEventListener("input",e=>{
-      if(!S.eqBands) return;
+      const q=S.eq; if(!q) return;
       const tail=prof()?.customTail||[0,0];
-      S.eqBands[i]=+e.target.value; S.eqPreset=CUSTOM_ID; S.eqBands[8]=tail[0]; S.eqBands[9]=tail[1];
+      q.bands[i]=+e.target.value; q.preset=CUSTOM_ID; if(q.B>8){ q.bands[8]=tail[0]; q.bands[9]=tail[1]; }
       $("bv"+i).textContent=fmtDb(+e.target.value); $("preset").value=String(CUSTOM_ID); queueEq();
     });
   });
   $("eqReset").onclick=()=>choosePreset(0);
-
-  const g=$("btnGrid");
-  PRESS.forEach(([name],k)=>{
-    const lab=document.createElement("span"); lab.textContent=name; g.appendChild(lab);
-    for(const side of ["L","R"]){
-      const s=document.createElement("select"); s.id="bt"+k+side;
-      for(const [v,n] of ACTIONS) s.add(new Option(n,String(v)));
-      s.onchange=()=>setButton(k,side,+s.value); g.appendChild(s);
-    }
-  });
   $("btnReset").onclick=async()=>{ if(!confirm("Reset all touch controls to factory defaults?")) return; await send(CMD.RESET_BUTTONS,[],"reset touch controls"); setTimeout(()=>send(CMD.STATE,[],"request state"),500); };
 
-  $("ambientSeg").onclick=e=>{ const b=e.target.closest("button"); if(b) setSound({ambient:+b.dataset.v}); };
-  $("ncModeSeg").onclick=e=>{ const b=e.target.closest("button"); if(b) setSound({ncMode:+b.dataset.v}); };
-  $("sceneSeg").onclick=e=>{ const b=e.target.closest("button"); if(b) setSound({scene:+b.dataset.v}); };
-  $("manual").onchange=e=>setSound({manual:+e.target.value});
-  $("manual").oninput=e=>$("manualVal").textContent=e.target.value+" / 5";
-  $("sens").onchange=e=>setSound({sens:+e.target.value});
-  $("sens").oninput=e=>$("sensVal").textContent=e.target.value+" / 10";
-  $("wind").onchange=e=>setSound({windOn:e.target.checked});
-  $("realtime").onchange=e=>setSound({realtime:e.target.checked});
-  $("trSeg").onclick=e=>{ const b=e.target.closest("button"); if(b) setSound({transparency:+b.dataset.v}); };
-  $("ldac").onchange=e=>flag(CMD.SET_LDAC,"ldac",e.target.checked,"LDAC");
-  const lhv=()=>{ S.lhvOn=$("lhvOn").checked; S.lhvDb=+$("lhvDb").value; render(); send(CMD.SET_LHV,[S.lhvOn?1:0,S.lhvDb],"limit high volume"); };
-  $("lhvOn").onchange=lhv; $("lhvDb").onchange=lhv;
-  $("spatial").onchange=e=>setSpatial(e.target.checked, +$("spatialMode").value);
-  $("spatialMode").onchange=e=>{ if(S.spatialOn) setSpatial(true, +e.target.value); else S.spatialMode=+e.target.value; };
-
   const cyc=()=>{ const v=($("cyNc").checked?1:0)|($("cyTr").checked?2:0)|($("cyNo").checked?4:0);
-    if(!v){ render(); return; } S.cycle=v; send(CMD.SET_CYCLE,[v],"set mode cycle"); };
+    if(!v){ render(); return; } S.cycle=v; send(CMD.SET_CYCLE,[S.cycleTws?(S.cycleHi|v):v],"set mode cycle"); };
   ["cyNc","cyTr","cyNo"].forEach(id=>$(id).onchange=cyc);
 
-  $("gaming").onchange=e=>flag(CMD.SET_GAMING,"gaming",e.target.checked,"gaming mode");
-  $("surround").onchange=e=>flag(CMD.SET_SURROUND,"surround",e.target.checked,"surround sound");
-  $("touchTone").onchange=e=>flag(CMD.SET_TOUCH_TONE,"touchTone",e.target.checked,"touch tone");
-  $("lowBatt").onchange=e=>flag(CMD.SET_LOWBATT,"lowBatt",e.target.checked,"low battery prompt");
-  const apo=()=>{ S.apoOn=$("apoOn").checked; S.apoDur=+$("apoDur").value; render(); send(CMD.SET_APO,[S.apoOn?1:0,S.apoDur],"auto power off"); };
-  $("apoOn").onchange=apo; $("apoDur").onchange=apo;
-  $("dual").onchange=async e=>{ await flag(CMD.SET_DUAL,"dual",e.target.checked,"dual connection"); if(e.target.checked) setTimeout(()=>send(CMD.DUAL_LIST,[],"request dual-connection devices"),400); };
+  $("dual").onchange=async e=>{ S.dual=e.target.checked; render(); await send(CMD.SET_DUAL,[S.dual?1:0],"dual connection"); if(S.dual) setTimeout(()=>send(CMD.DUAL_LIST,[],"request dual-connection devices"),400); };
   $("devRefresh").onclick=()=>send(CMD.DUAL_LIST,[],"request dual-connection devices");
   $("refreshBtn").onclick=requestAll;
   $("connectBtn").onclick=async()=>{
@@ -819,12 +1135,11 @@ function buildUI(){
   if("serial" in navigator){
     navigator.serial.addEventListener("disconnect", e=>{ if(active && e.target===active.port){ active.isOpen=false; onDisconnect(); } });
     navigator.serial.addEventListener("connect", ()=>{ if(!userDisconnected) setTimeout(autoDetect, 1500); });
-    // keep looking in the background while nothing is connected (e.g. earbuds still in the case)
     setInterval(()=>{ if(!active && !userDisconnected && document.visibilityState==="visible") autoDetect(); }, 20000);
     document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && !active && !userDisconnected) autoDetect(); });
     autoDetect();
   } else {
-    notice("This browser can't open Bluetooth serial connections. Open this page in <b>Chrome or Edge (version 117 or newer)</b> on Windows.", true);
+    notice("This browser can't open Bluetooth serial connections. Open this page in <b>Chrome or Edge (version 117 or newer)</b> on a computer.", true);
   }
 }
 buildUI();
